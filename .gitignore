@@ -24,7 +24,17 @@ pnpm-debug.log*
 .idea/
 
 # media files (too large for GitHub, served via redirects)
-public/media/
+# Track ONLY PDFs, JPGs, PNGs from media (MP3/MP4 are too large)
+# Small media served directly from Cloudflare; large files via redirects
+public/media/**
+!public/media/**/*.pdf
+!public/media/**/*.jpg
+!public/media/**/*.png
+!public/media/**/*.json
+!public/media/**/*.md
+
+# but exclude the 1 PDF over 25MB
+public/media/مجموع الشيخ عطية الله الطبعة الثانية.pdf
 
 # wrangler
 .wrangler/
