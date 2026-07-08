@@ -1,0 +1,247 @@
+---
+import sidebarAbuYahya from '../data/sidebar-abu-yahya.json';
+import sidebarAtiyatullah from '../data/sidebar-atiyatullah.json';
+
+interface Props {
+  author: string;
+  currentSlug?: string;
+}
+
+const { author, currentSlug = "" } = Astro.props;
+
+const sidebarData = author === 'abu-yahya' ? sidebarAbuYahya : sidebarAtiyatullah;
+const maxPage = author === 'abu-yahya' ? 3113 : 2456;
+
+function isPartActive(part: any): boolean {
+  const partSlug = part.link.split('/').pop();
+  if (currentSlug === partSlug) return true;
+  if (part.chapters) {
+    for (const ch of part.chapters) {
+      if (currentSlug === ch.link.split('/').pop()) return true;
+      if (ch.sections && ch.sections.some((s: any) => currentSlug === s.link.split('/').pop())) return true;
+    }
+  }
+  return false;
+}
+
+function isChapterActive(chapter: any): boolean {
+  if (currentSlug === chapter.link.split('/').pop()) return true;
+  if (chapter.sections && chapter.sections.some((s: any) => currentSlug === s.link.split('/').pop())) return true;
+  return false;
+}
+---
+
+<aside class="sidebar" id="sidebar-nav">
+  <div class="sidebar-header">
+    <h3>فهرس الموضوعات</h3>
+    <button id="close-sidebar" class="close-sidebar-btn" aria-label="إغلاق الفهرس">&times;</button>
+  </div>
+  
+  <div class="sidebar-page-nav" data-pagefind-ignore>
+    <span class="page-nav-label">انتقال لصفحة:</span>
+    <div class="page-nav-input-group">
+      <input 
+        type="number" 
+        id="sidebar-page-input" 
+        min="1" 
+        max={maxPage} 
+        placeholder={`1 - ${maxPage}`} 
+        aria-label="رقم الصفحة"
+      />
+      <button id="sidebar-page-submit" class="page-nav-submit-btn" aria-label="انتقل">
+        <span>انتقال</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+    </div>
+    <div id="sidebar-page-error" class="page-nav-error" style="display: none;"></div>
+  </div>
+  
+  <div class="sidebar-tree" data-sidebar-tree>
+    {sidebarData.map((part) => {
+      const partExpanded = isPartActive(part);
+      return (
+        <div class={`tree-part ${partExpanded ? 'expanded' : ''}`}>
+          <div class="tree-part-header">
+            <button class="tree-toggle" aria-label="توسيع/طي" data-tree-toggle>
+              <svg class="toggle-icon" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <a 
+              href={part.link} 
+              class={`part-link ${currentSlug === part.link.split('/').pop() ? 'active' : ''}`}
+            >
+              {part.title}
+            </a>
+          </div>
+          
+          {part.chapters && part.chapters.length > 0 && (
+            <div class="part-children">
+              {part.chapters.map((chapter) => {
+                const chActive = isChapterActive(chapter);
+                return (
+                  <div class={`tree-chapter ${chActive ? 'expanded' : ''}`}>
+                    <div class="tree-chapter-header">
+                      {chapter.sections && chapter.sections.length > 0 && (
+                        <button class="tree-toggle" aria-label="توسيع/طي" data-tree-toggle>
+                          <svg class="toggle-icon" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                            <path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </button>
+                      )}
+                      {(!chapter.sections || chapter.sections.length === 0) && (
+                        <span class="tree-toggle-spacer"></span>
+                      )}
+                      <a 
+                        href={chapter.link} 
+                        class={`chapter-link ${currentSlug === chapter.link.split('/').pop() ? 'active' : ''}`}
+                      >
+                        {chapter.title}
+                      </a>
+                    </div>
+                    
+                    {chapter.sections && chapter.sections.length > 0 && (
+                      <div class="chapter-children">
+                        {chapter.sections.map((section) => (
+                          <a 
+                            href={section.link} 
+                            class={`section-link ${currentSlug === section.link.split('/').pop() ? 'active' : ''}`}
+                          >
+                            {section.title}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+</aside>
+
+<style is:global>
+  .tree-part-header,
+  .tree-chapter-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .tree-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 2px;
+    flex-shrink: 0;
+    margin-top: 4px;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+    line-height: 1;
+  }
+  .tree-toggle:hover {
+    color: var(--accent-color);
+  }
+  .tree-toggle-spacer {
+    width: 14px;
+    flex-shrink: 0;
+  }
+  .tree-part:not(.expanded) > .tree-part-header .toggle-icon,
+  .tree-chapter:not(.expanded) > .tree-chapter-header .toggle-icon {
+    transform: rotate(-90deg);
+  }
+  .tree-part > .part-children,
+  .tree-chapter > .chapter-children {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    max-height: 0;
+  }
+  .tree-part.expanded > .part-children,
+  .tree-chapter.expanded > .chapter-children {
+    max-height: 10000px;
+  }
+  .part-children {
+    margin-right: 14px;
+  }
+  .chapter-children {
+    margin-right: 14px;
+  }
+  .part-link, .chapter-link, .section-link {
+    display: block;
+    padding: 4px 0;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    border-radius: 4px;
+    transition: color 0.2s, background-color 0.2s;
+  }
+  .part-link {
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .chapter-link {
+    font-weight: 500;
+    font-size: 0.82rem;
+    padding-right: 4px;
+  }
+  .section-link {
+    font-weight: 400;
+    font-size: 0.78rem;
+    padding-right: 8px;
+    color: var(--text-muted);
+  }
+  .part-link:hover, .chapter-link:hover, .section-link:hover {
+    color: var(--accent-color);
+  }
+  .part-link.active, .chapter-link.active, .section-link.active {
+    color: var(--primary-light);
+    font-weight: 700;
+    background-color: rgba(197, 168, 128, 0.1);
+    padding: 4px 6px;
+    margin: 0 -6px;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tree = document.querySelector('[data-sidebar-tree]');
+    if (!tree) return;
+
+    tree.addEventListener('click', (e) => {
+      const toggle = e.target.closest('[data-tree-toggle]');
+      if (!toggle) return;
+      e.preventDefault();
+      const header = toggle.closest('.tree-part-header, .tree-chapter-header');
+      if (!header) return;
+      const container = header.parentElement;
+      container.classList.toggle('expanded');
+    });
+
+    // Auto-scroll sidebar to show active item
+    const sidebarTree = tree;
+    const activeLink = sidebarTree.querySelector('.active');
+    if (activeLink) {
+      const expandParent = (el: HTMLElement | null) => {
+        if (!el || el === sidebarTree) return;
+        if (el.classList.contains('tree-part') || el.classList.contains('tree-chapter')) {
+          el.classList.add('expanded');
+        }
+        expandParent(el.parentElement);
+      };
+      expandParent(activeLink.parentElement);
+
+      setTimeout(() => {
+        const rect = sidebarTree.getBoundingClientRect();
+        const activeRect = activeLink.getBoundingClientRect();
+        const offset = activeRect.top - rect.top - rect.height / 2 + activeRect.height / 2;
+        sidebarTree.scrollTop += offset;
+      }, 50);
+    }
+  });
+</script>

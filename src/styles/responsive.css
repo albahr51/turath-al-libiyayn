@@ -1,0 +1,314 @@
+/* ========================================
+   RESPONSIVE — Full Device Coverage
+   ======================================== */
+
+/* --- Tiny phones (320px+) --- */
+@media (max-width: 400px) {
+  html { font-size: 14px; }
+  .header-container { padding: 0 10px; }
+  .brand-title { font-size: 0.85rem; }
+  .brand-subtitle { font-size: 0.6rem; }
+  .header-search-box { min-width: 100px; }
+  .header-search-input { font-size: 0.75rem; padding: 5px 26px 5px 8px; }
+  .header-actions { gap: 6px; }
+  .theme-toggle-btn { padding: 5px; }
+  .theme-toggle-btn svg { width: 16px; height: 16px; }
+  .hero-section { padding: 30px 10px 24px; }
+  .hero-title { font-size: 1.5rem; }
+  .hero-subtitle { font-size: 0.82rem; }
+  .hero-compiler { font-size: 0.65rem; }
+  .hero-covers { gap: 16px; }
+  .cover-card { max-width: 130px; }
+  .portal-badge { font-size: 0.55rem; padding: 1px 10px; }
+  .section-title { font-size: 1.2rem; }
+  .section-desc { font-size: 0.82rem; }
+  .content-wrapper { padding: 20px 10px 40px; }
+  .combined-stats { gap: 5px; }
+  .stat-bubble { padding: 8px 10px; min-width: 70px; max-width: 110px; }
+  .stat-num { font-size: 0.95rem; }
+  .stat-label { font-size: 0.62rem; }
+  .strip-item img { height: 45px; }
+  .strip-track { gap: 6px; animation-duration: 20s; }
+  .book-portal-card { padding: 20px 16px; }
+  .book-card-title { font-size: 0.95rem; }
+  .mini-num { font-size: 0.95rem; }
+  .scholar-bio-card .scholar-avatar-container { height: 160px; }
+  .scholar-name { font-size: 0.85rem; padding: 12px 14px 2px; }
+  .scholar-excerpt { font-size: 0.75rem; padding: 0 14px; }
+  .btn-read-bio { margin: 0 14px 14px; padding: 8px 14px; font-size: 0.75rem; }
+  .quotes-carousel { padding: 16px; }
+  .quote-text { font-size: 0.9rem; }
+  .quote-bracket { font-size: 1.5rem; }
+  .carousel-btn { width: 32px; height: 32px; }
+  .footer-copy { font-size: 0.8rem; }
+  .footer-desc { font-size: 0.7rem; }
+  .app-footer { padding: 20px 14px; }
+  .subportal-hero { padding: 50px 12px; }
+  .hero-full-title { font-size: 1.2rem; }
+  .hero-author-name { font-size: 0.85rem; }
+  .book-badge { font-size: 0.7rem; padding: 4px 12px; }
+  .hero-desc { font-size: 0.85rem; }
+  .overview-grid { grid-template-columns: 1fr; }
+  .bio-hero { padding: 50px 12px; }
+  .bio-title { font-size: 1.5rem; }
+  .bio-desc { font-size: 0.85rem; }
+  .bio-subtitle { font-size: 0.9rem; }
+  .bio-overview { margin-top: -20px; }
+  .overview-card { padding: 16px; }
+  .books-grid { gap: 16px; }
+  .mini-stat { min-width: 60px; padding: 8px 4px; }
+  .download-links { flex-direction: column; gap: 6px; }
+  .btn-download { font-size: 0.72rem; padding: 6px 10px; justify-content: center; }
+  .btn-portal-primary { font-size: 0.82rem; padding: 10px 16px; }
+  .hero-covers { gap: 12px; }
+  .photo-strip { padding: 5px 0 16px; }
+  .page-nav-modal-form { flex-direction: column; }
+  .modal-page-submit-btn { width: 100%; justify-content: center; }
+  .page-nav-modal-content { margin: 10px; }
+  .page-nav-modal-body { padding: 16px; }
+  .part-card-inner { padding: 16px; }
+  .part-card-header { flex-wrap: wrap; gap: 8px; }
+  .part-card-title { font-size: 0.9rem; }
+  .section-divider-title { font-size: 1rem; }
+  .scholars-grid { gap: 16px; }
+  .scholar-avatar-container { height: 140px; }
+  .book-content h1 { font-size: clamp(1.2rem, 5vw, 1.6rem); }
+  .book-content h2 { font-size: clamp(1.1rem, 4vw, 1.4rem); }
+  .book-content { font-size: 0.95rem; padding: 10px 10px 40px; }
+  .chapter-media-container { padding: 12px; }
+  .media-header { font-size: 0.95rem; }
+  .media-item-wrapper { padding: 10px; }
+  .book-image { border-radius: 4px; }
+  .quran-verse { font-size: 1.1rem; padding: 12px 14px; }
+  .book-download-card { padding: 18px 14px; }
+  .download-card-title { font-size: 1rem; }
+  .btn-download-pdf { width: 100%; justify-content: center; }
+  .mobile-toc-btn { bottom: 16px; right: 16px; padding: 10px 16px; font-size: 0.82rem; }
+  .mobile-toc-btn svg { width: 16px; height: 16px; }
+  .bio-gallery-track .gallery-card { flex: 0 0 120px; height: 120px; }
+  .bio-gallery-section { padding: 0 10px; }
+}
+
+/* --- Small phones (401px - 576px) --- */
+@media (min-width: 401px) and (max-width: 576px) {
+  html { font-size: 15px; }
+  .header-container { padding: 0 14px; }
+  .brand-title { font-size: 0.95rem; }
+  .brand-subtitle { font-size: 0.65rem; }
+  .header-search-box { min-width: 130px; }
+  .hero-section { padding: 40px 14px 30px; }
+  .hero-title { font-size: 1.8rem; }
+  .hero-covers { gap: 20px; }
+  .cover-card { max-width: 150px; }
+  .content-wrapper { padding: 24px 14px 40px; }
+  .stat-bubble { min-width: 80px; max-width: 130px; padding: 10px 12px; }
+  .strip-item img { height: 55px; }
+  .book-portal-card { padding: 24px 18px; }
+  .quotes-carousel { padding: 20px; }
+  .subportal-hero { padding: 60px 16px; }
+  .hero-full-title { font-size: 1.4rem; }
+  .bio-hero { padding: 60px 16px; }
+  .bio-title { font-size: 1.8rem; }
+  .bio-overview { margin-top: -30px; }
+  .hero-covers { gap: 16px; }
+  .page-nav-modal-form { flex-direction: column; }
+  .modal-page-submit-btn { width: 100%; justify-content: center; }
+  .book-content { font-size: 1rem; padding: 14px 14px 40px; }
+  .book-content h1 { font-size: clamp(1.3rem, 5vw, 1.8rem); }
+  .book-content h2 { font-size: clamp(1.2rem, 4.5vw, 1.5rem); }
+}
+
+/* --- Phones landscape orientation --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .app-header { height: 56px; }
+  .layout-container { min-height: calc(100vh - 56px); }
+  .sidebar { height: calc(100vh - 56px); top: 56px; }
+  .hero-section { padding: 20px 20px 14px; }
+  .hero-title { font-size: 1.3rem; margin-bottom: 4px; }
+  .hero-subtitle { font-size: 0.78rem; margin-bottom: 4px; }
+  .hero-covers { gap: 14px; }
+  .cover-card { max-width: 120px; }
+  .cover-img { box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
+  .cover-label { font-size: 0.7rem; }
+  .portal-badge { font-size: 0.55rem; margin-bottom: 2px; }
+  .hero-divider { margin-bottom: 6px; }
+  .hero-compiler { font-size: 0.65rem; margin-bottom: 8px; }
+  .combined-stats { margin-bottom: 16px; }
+  .stat-bubble { padding: 6px 10px; min-width: 70px; }
+  .stat-num { font-size: 0.9rem; }
+  .stat-label { font-size: 0.6rem; }
+  .photo-strip { padding: 5px 0 12px; }
+  .strip-item img { height: 45px; }
+  .books-portal-section { margin-bottom: 30px; }
+  .section-title { font-size: 1.1rem; margin-bottom: 4px; }
+  .section-desc { font-size: 0.75rem; margin-bottom: 16px; }
+  .books-grid { gap: 14px; }
+  .book-portal-card { padding: 16px; }
+  .book-card-title { font-size: 0.85rem; }
+  .book-card-author { font-size: 0.72rem; margin-bottom: 6px; }
+  .book-card-desc { font-size: 0.72rem; margin-bottom: 10px; }
+  .book-mini-stats { margin-bottom: 10px; }
+  .mini-stat { padding: 6px 4px; min-width: 50px; }
+  .mini-num { font-size: 0.85rem; }
+  .mini-lbl { font-size: 0.6rem; }
+  .btn-portal-primary { padding: 8px 14px; font-size: 0.75rem; }
+  .scholars-section { margin-bottom: 30px; }
+  .scholars-grid { gap: 14px; }
+  .scholar-avatar-container { height: 120px; }
+  .scholar-name { font-size: 0.78rem; padding: 10px 12px 2px; }
+  .scholar-excerpt { font-size: 0.7rem; padding: 0 12px; margin-bottom: 8px; }
+  .btn-read-bio { padding: 6px 12px; font-size: 0.7rem; margin: 0 12px 12px; }
+  .quotes-section { margin-bottom: 20px; }
+  .quotes-carousel { padding: 14px; }
+  .quote-text { font-size: 0.82rem; }
+  .carousel-btn { width: 28px; height: 28px; }
+  .carousel-btn svg { width: 14px; height: 14px; }
+  .content-wrapper { padding: 20px 14px 30px; }
+  .app-footer { padding: 16px 14px; }
+  .footer-copy { font-size: 0.75rem; }
+  .footer-desc { font-size: 0.65rem; }
+  .sidebar { right: -280px; width: 260px; }
+  .subportal-hero { padding: 30px 16px; }
+  .bio-hero { padding: 30px 16px; }
+  .bio-title { font-size: 1.4rem; }
+  .bio-subtitle { font-size: 0.85rem; }
+  .page-nav-modal-desc { font-size: 0.78rem; }
+  .page-nav-modal-form { flex-direction: row; }
+  .book-content { padding: 10px 12px 30px; font-size: 0.95rem; }
+  .chapter-media-container { padding: 12px; }
+  .book-download-card { padding: 16px; }
+  .mobile-toc-btn { bottom: 14px; right: 14px; padding: 8px 14px; font-size: 0.78rem; }
+}
+
+/* --- Phones & small tablets portrait (577px - 768px) --- */
+@media (min-width: 577px) and (max-width: 768px) {
+  .hero-section { padding: 50px 18px 36px; }
+  .hero-title { font-size: 2rem; }
+  .hero-covers { gap: 28px; }
+  .cover-card { max-width: 180px; }
+  .content-wrapper { padding: 30px 18px 50px; }
+  .combined-stats { gap: 8px; }
+  .stat-bubble { padding: 10px 16px; min-width: 100px; max-width: 150px; }
+  .strip-item img { height: 65px; }
+  .book-portal-card { padding: 28px 24px; }
+  .section-title { font-size: 1.4rem; }
+  .quotes-carousel { padding: 24px; }
+  .subportal-hero { padding: 70px 18px; }
+  .hero-full-title { font-size: 1.6rem; }
+  .bio-hero { padding: 70px 18px; }
+  .bio-title { font-size: 2.1rem; }
+  .bio-overview { margin-top: -35px; }
+  .scholar-avatar-container { height: 180px; }
+  .book-content { padding: 16px 20px 50px; }
+  .book-content h1 { font-size: clamp(1.5rem, 5vw, 2rem); }
+  .book-content h2 { font-size: clamp(1.3rem, 4.5vw, 1.7rem); }
+  .book-download-card { padding: 24px; }
+}
+
+/* --- Large phones / small tablets landscape (769px - 991px) --- */
+@media (min-width: 769px) and (max-width: 991px) {
+  .hero-title { font-size: 2.2rem; }
+  .cover-card { max-width: 200px; }
+  .hero-covers { gap: 36px; }
+  .stat-bubble { min-width: 110px; max-width: 160px; }
+  .strip-item img { height: 75px; }
+  .subportal-hero { padding: 80px 20px; }
+  .hero-full-title { font-size: 1.8rem; }
+  .bio-title { font-size: 2.3rem; }
+  .book-content { padding: 20px 28px 50px; }
+  .scholar-avatar-container { height: 200px; }
+}
+
+/* --- Tablets portrait (577px - 991px) sidebar adjustments --- */
+@media (min-width: 577px) and (max-width: 991px) {
+  .book-portal-card { border-radius: 14px; }
+  .scholar-bio-card { border-radius: 14px; }
+}
+
+/* --- Smaller desktops (992px - 1199px) --- */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .cover-card { max-width: 220px; }
+  .hero-covers { gap: 40px; }
+  .stat-bubble { min-width: 120px; max-width: 160px; }
+  .sidebar { width: 280px; }
+  .layout-container { grid-template-columns: 280px 1fr; }
+  .book-content { padding: 20px 32px 60px; }
+  .bio-cover-side { left: -100px; width: 120px; }
+  .subportal-hero .hero-cover-side { left: -100px; width: 120px; }
+}
+
+/* --- Large desktops (1200px+) --- */
+@media (min-width: 1200px) {
+  .stat-bubble { min-width: 130px; max-width: 170px; }
+  .sidebar { width: 320px; }
+  .layout-container { grid-template-columns: 320px 1fr; }
+}
+
+/* --- 4K and ultra-wide (1600px+) --- */
+@media (min-width: 1600px) {
+  html { font-size: 19px; }
+  .header-container { max-width: 1600px; }
+  .hero-container { max-width: 1000px; }
+  .hero-title { font-size: 2.6rem; }
+  .hero-covers { gap: 60px; }
+  .cover-card { max-width: 280px; }
+  .content-wrapper { max-width: 1400px; }
+  .book-content { max-width: 900px; }
+  .sidebar { width: 360px; }
+  .layout-container { grid-template-columns: 360px 1fr; }
+  .quotes-carousel-wrapper { max-width: 800px; }
+  .footer-container { max-width: 1000px; }
+}
+
+/* --- Touch device improvements --- */
+@media (hover: none) and (pointer: coarse) {
+  .nav-link { padding: 8px 0; }
+  .theme-toggle-btn { padding: 10px; }
+  .carousel-btn { width: 44px; height: 44px; }
+  .carousel-btn svg { width: 20px; height: 20px; }
+  .btn-portal-primary { padding: 14px 20px; }
+  .btn-download { padding: 10px 16px; }
+  .btn-read-bio { padding: 12px 20px; }
+  .jump-btn { width: 36px; height: 36px; }
+  .jump-go { width: 40px; height: 36px; }
+  .page-nav-submit-btn { padding: 10px 18px; }
+  .modal-page-submit-btn { padding: 14px 24px; }
+  .mobile-toc-btn { padding: 14px 22px; }
+  .close-sidebar-btn { padding: 8px; font-size: 2.2rem; }
+  .bio-gallery-nav { width: 44px; height: 44px; opacity: 0.9 !important; }
+  .footnote-ref { font-size: 0.9em; padding: 0 4px; }
+  .header-search-input { font-size: 16px; }
+  .page-nav-input-group input { font-size: 16px; }
+  .page-nav-modal-form input { font-size: 16px; }
+  .header-search-results { max-height: 60vh; }
+  .hsr-item { padding: 12px 16px; }
+}
+
+/* --- Prefers reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .strip-track { animation: none !important; }
+  .cover-card:hover .cover-img { transform: none; }
+  .book-portal-card:hover { transform: none; }
+  .scholar-bio-card:hover { transform: none; }
+}
+
+/* --- Print styles for responsive --- */
+@media print {
+  .app-header, .app-footer, .sidebar, .mobile-toc-btn,
+  .sidebar-overlay, .page-nav-modal, .footnote-modal-overlay,
+  .theme-toggle-btn, .mobile-menu-btn, .header-search-box,
+  .chapter-media-container, .book-download-card,
+  .bio-gallery-section, .photo-strip,
+  .hero-covers, .books-portal-section, .scholars-section,
+  .quotes-section, .combined-stats { display: none !important; }
+  .layout-container { display: block; }
+  .main-content { width: 100%; }
+  .book-content { max-width: 100%; padding: 0; margin: 0; font-size: 12pt; }
+  body { background: #fff; font-size: 12pt; }
+  .page-break-marker { margin: 20px 0; }
+}

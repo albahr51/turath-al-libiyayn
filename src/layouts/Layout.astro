@@ -1,0 +1,462 @@
+---
+import '../styles/layout.css';
+import '../styles/responsive.css';
+
+interface Props {
+	title: string;
+	description?: string;
+	themeClass?: string;
+}
+
+const { title, description, themeClass = "" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>{title}</title>
+		{description && <meta name="description" content={description} />}
+		<meta property="og:title" content={title} />
+		{description && <meta property="og:description" content={description} />}
+		<meta property="og:type" content="website" />
+		<meta property="og:locale" content="ar" />
+		<meta property="og:site_name" content="الأعمال الكاملة للشيخين الشهيدين" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta property="og:image" content="/media/cover_1.png" />
+		<meta property="og:image:width" content="600" />
+		<meta property="og:image:height" content="900" />
+
+		<script is:inline>
+			const theme = (() => {
+				if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+					return localStorage.getItem('theme');
+				}
+				return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+			})();
+			document.documentElement.setAttribute('data-theme', theme);
+		</script>
+	</head>
+	<body class={themeClass}>
+		<slot />
+
+		<script>
+			// Layout JS
+			// Theme Toggle
+			const themeToggle = document.getElementById("theme-toggle");
+			themeToggle?.addEventListener("click", () => {
+				const currentTheme = document.documentElement.getAttribute("data-theme");
+				const newTheme = currentTheme === "dark" ? "light" : "dark";
+				document.documentElement.setAttribute("data-theme", newTheme);
+				localStorage.setItem("theme", newTheme);
+			});
+
+			// Header Mobile Menu Toggle
+			const menuToggle = document.getElementById("menu-toggle");
+			const headerNav = document.getElementById("header-navigation");
+			menuToggle?.addEventListener("click", () => {
+				headerNav?.classList.toggle("mobile-open");
+			});
+			// Search — inline header search with JSON index
+			let searchIndex: any[] | null = null;
+			let searchTimeout: any = null;
+
+			const authorLabels: Record<string, string> = {
+				'abu-yahya': 'مجموع أعمال الشيخ أبي يحيى الليبي',
+				'atiyatullah': 'مجموع أعمال الشيخ عطية الله الليبي'
+			};
+
+			function normArabic(s: string): string {
+				return s.replace(/[\u0610-\u061A\u064B-\u0652\u0670\u06D6-\u06ED\u08F0-\u08FF]/g, '').replace(/[إأآا]/g, 'ا').replace(/[ى]/g, 'ي').replace(/[ة]/g, 'ه').replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي');
+			}
+
+			async function loadSearchIndex() {
+				if (searchIndex) return;
+				try {
+					const resp = await fetch('/search/search-index.json');
+					searchIndex = await resp.json();
+				} catch (e) {
+					console.error('Search index load failed:', e);
+				}
+			}
+
+			function doSearch(query: string): any[] {
+				if (!searchIndex || !query.trim()) return [];
+
+				// Extract quoted phrases (exact match required)
+				const phrases: string[] = [];
+				let remainingQuery = query.trim();
+				const quoteRegex = /"([^"]+)"/g;
+				let match;
+				while ((match = quoteRegex.exec(query)) !== null) {
+					const p = normArabic(match[1].trim());
+					if (p.length >= 2) phrases.push(p);
+					remainingQuery = remainingQuery.replace(match[0], '');
+				}
+
+				const words = normArabic(remainingQuery).split(/\s+/).filter(w => w.length >= 2);
+				const allTerms = [...phrases, ...words];
+
+				if (allTerms.length === 0) return [];
+
+				const scored: any[] = [];
+				for (const doc of searchIndex) {
+					const docWords = doc.w;
+					if (!docWords || docWords.length === 0) continue;
+
+					// For each quoted phrase: doc.t must include it
+					let phraseOk = true;
+					for (const p of phrases) {
+						if (!doc.t.includes(p)) { phraseOk = false; break; }
+					}
+					if (!phraseOk) continue;
+
+					// For each word: strict AND
+					let wordsOk = true;
+					let matchCount = 0;
+					for (const w of words) {
+						if (docWords.includes(w)) matchCount++;
+						else { wordsOk = false; break; }
+					}
+					if (!wordsOk && words.length > 0) continue;
+
+					// If only phrases (no standalone words), any result that passed phrase check qualifies
+					if (phrases.length > 0 && words.length === 0) {
+						scored.push({ id: doc.id, title: doc.title, slug: doc.slug, author: doc.author, preview: doc.p, score: 1000 });
+						continue;
+					}
+
+					// Two-tier ranking
+					const q = normArabic(remainingQuery.trim());
+					const isPhrase = q.length >= 3 ? doc.t.includes(q) : false;
+					const score = isPhrase ? 1000 + matchCount : matchCount;
+					if (matchCount > 0) {
+						scored.push({ id: doc.id, title: doc.title, slug: doc.slug, author: doc.author, preview: doc.p, score });
+					}
+				}
+
+				scored.sort((a, b) => b.score - a.score);
+				return scored;
+			}
+
+			function highlightMatch(text: string, query: string): string {
+				const terms = normArabic(query).split(/\s+/).filter(Boolean);
+				let res = text.substring(0, 300);
+				for (const t of terms) {
+					const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					res = res.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
+				}
+				return res;
+			}
+
+			function renderResults(results: any[], query: string) {
+				const container = document.getElementById('header-search-results');
+				if (!container) return;
+				if (!query.trim()) { container.classList.remove('active'); container.innerHTML = ''; return; }
+				if (results.length === 0) {
+					container.innerHTML = `<div class="hsr-status">لا توجد نتائج لـ "${query}"</div>`;
+					container.classList.add('active');
+					return;
+				}
+				let html = `<div class="hsr-count">${results.length} نتيجة</div>`;
+				for (const r of results) {
+					const book = authorLabels[r.author] || '';
+					const snippet = highlightMatch(r.preview, query);
+					html += `<a href="/book/${r.author}/${r.slug}#q=${encodeURIComponent(query)}" class="hsr-item">
+						<div class="hsr-book">${book}</div>
+						<div class="hsr-title">${r.title}</div>
+						<div class="hsr-snippet">${snippet}</div>
+					</a>`;
+				}
+				container.innerHTML = html;
+				container.classList.add('active');
+			}
+
+			// Attach search input listener
+			document.addEventListener('DOMContentLoaded', () => {
+				const input = document.getElementById('header-search-input') as HTMLInputElement;
+				const results = document.getElementById('header-search-results');
+				if (!input) return;
+
+				// Preload index in background
+				loadSearchIndex();
+
+				input.addEventListener('input', (e) => {
+					const val = (e.target as HTMLInputElement).value;
+					clearTimeout(searchTimeout);
+					searchTimeout = setTimeout(() => {
+						const res = doSearch(val);
+						renderResults(res, val);
+					}, 200);
+				});
+
+				input.addEventListener('focus', () => {
+					if (input.value.trim() && results) {
+						results.classList.add('active');
+					}
+				});
+
+				// Close dropdown on click outside
+				document.addEventListener('click', (e) => {
+					const box = document.getElementById('header-search-box');
+					if (box && !box.contains(e.target as Node) && results) {
+						results.classList.remove('active');
+					}
+				});
+
+				// Close on Escape
+				input.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape' && results) {
+						results.classList.remove('active');
+						input.blur();
+					}
+				});
+
+				// Store search query in sessionStorage before navigating to result page
+				results.addEventListener('click', function(ev) {
+					var link = (ev.target as HTMLElement).closest('.hsr-item') as HTMLAnchorElement;
+					if (!link) return;
+					var href = link.getAttribute('href') || '';
+					var qi = href.indexOf('#q=');
+					if (qi !== -1) {
+						sessionStorage.setItem('sq', href.substring(qi + 3));
+					}
+				});
+			});
+
+			// Footnotes Tooltip logic - Modal approach for constrained containers
+			function createFootnoteModal() {
+				const existing = document.getElementById("footnote-modal-overlay");
+				if (existing) return existing;
+				const overlay = document.createElement("div");
+				overlay.id = "footnote-modal-overlay";
+				overlay.className = "footnote-modal-overlay";
+				overlay.innerHTML = '<div class="footnote-modal-content"><button class="footnote-modal-close" aria-label="إغلاق">&times;</button><div class="footnote-modal-body"></div></div>';
+				document.body.appendChild(overlay);
+				const closeBtn = overlay.querySelector(".footnote-modal-close") as HTMLElement;
+				closeBtn.addEventListener("click", () => { overlay.classList.remove("active"); });
+				overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.classList.remove("active"); });
+				document.addEventListener("keydown", (e) => { if (e.key === "Escape") overlay.classList.remove("active"); });
+				return overlay;
+			}
+
+			function initFootnotes() {
+				const overlay = createFootnoteModal();
+				const modalBody = overlay.querySelector(".footnote-modal-body") as HTMLElement;
+
+				document.querySelectorAll(".footnote-ref").forEach(ref => {
+					ref.addEventListener("mouseenter", () => {
+						const tooltip = ref.nextElementSibling as HTMLElement;
+						if (tooltip && tooltip.classList.contains("footnote-tooltip")) {
+							tooltip.style.left = "";
+							tooltip.style.right = "";
+							tooltip.style.transform = "";
+							if (window.innerWidth > 768) {
+								const rect = tooltip.getBoundingClientRect();
+								const pad = 15;
+								if (rect.left < pad) {
+									tooltip.style.left = "0";
+									tooltip.style.right = "auto";
+									tooltip.style.transform = "translateY(-2px)";
+								} else if (rect.right > window.innerWidth - pad) {
+									tooltip.style.right = "0";
+									tooltip.style.left = "auto";
+									tooltip.style.transform = "translateY(-2px)";
+								}
+							}
+						}
+					});
+
+					ref.addEventListener("click", e => {
+						e.preventDefault();
+						e.stopPropagation();
+						const tooltip = ref.nextElementSibling as HTMLElement;
+						if (!tooltip || !tooltip.classList.contains("footnote-tooltip")) return;
+
+						const text = tooltip.textContent || "";
+						const num = ref.getAttribute("data-fn-num") || "";
+						modalBody.innerHTML = `<strong>(${num})</strong> ${text}`;
+						overlay.classList.add("active");
+					});
+				});
+
+				document.addEventListener("click", e => {
+					if (!(e.target as HTMLElement).closest(".footnote-wrapper")) {
+						document.querySelectorAll(".footnote-tooltip.active").forEach(active => {
+							active.classList.remove("active");
+						});
+					}
+				});
+			}
+
+			if (document.readyState === "loading") {
+				document.addEventListener("DOMContentLoaded", initFootnotes);
+			} else {
+				initFootnotes();
+			}
+
+			// Mobile TOC Sidebar Toggle
+			const mobileTocToggle = document.getElementById("mobile-toc-toggle");
+			const closeSidebar = document.getElementById("close-sidebar");
+			const sidebarNav = document.getElementById("sidebar-nav");
+			const sidebarOverlay = document.getElementById("sidebar-overlay");
+
+			if (mobileTocToggle && sidebarNav && sidebarOverlay) {
+				const openSidebar = () => {
+					sidebarNav.classList.add("mobile-open");
+					sidebarOverlay.classList.add("active");
+					document.body.style.overflow = "hidden";
+				};
+				const closeSidebarFn = () => {
+					sidebarNav.classList.remove("mobile-open");
+					sidebarOverlay.classList.remove("active");
+					document.body.style.overflow = "auto";
+				};
+
+				mobileTocToggle.addEventListener("click", openSidebar);
+				closeSidebar?.addEventListener("click", closeSidebarFn);
+				sidebarOverlay.addEventListener("click", closeSidebarFn);
+				sidebarNav.querySelectorAll("a").forEach(link => {
+					link.addEventListener("click", closeSidebarFn);
+				});
+			}
+
+			// Page Jump Redirection Logic
+			interface PageMap {
+				maxPage: number;
+				pages: string[];
+			}
+			
+			let pageMapData: PageMap | null = null;
+
+			async function getPageMap(slug: string): Promise<PageMap | null> {
+				if (pageMapData) return pageMapData;
+				try {
+					const res = await fetch(`/page-maps/${slug}.json`);
+					if (!res.ok) throw new Error("Failed to load page map");
+					pageMapData = await res.json();
+					return pageMapData;
+				} catch (err) {
+					console.error(err);
+					return null;
+				}
+			}
+
+			async function navigateToPage(inputEl: HTMLInputElement, errorEl: HTMLElement, submitBtn: HTMLButtonElement) {
+				const activeBookSlug = (window as any).activeBookSlug;
+				if (!activeBookSlug) return;
+				errorEl.style.display = "none";
+				errorEl.textContent = "";
+				
+				const pageNum = parseInt(inputEl.value.trim(), 10);
+				if (isNaN(pageNum) || pageNum < 1) {
+					errorEl.textContent = "يرجى إدخال رقم صفحة صالح (1 أو أكبر).";
+					errorEl.style.display = "block";
+					return;
+				}
+				
+				submitBtn.disabled = true;
+				const originalHTML = submitBtn.innerHTML;
+				submitBtn.innerHTML = "<span>جاري التحويل...</span>";
+				
+				const map = await getPageMap(activeBookSlug);
+				if (!map) {
+					errorEl.textContent = "حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة لاحقاً.";
+					errorEl.style.display = "block";
+					submitBtn.disabled = false;
+					submitBtn.innerHTML = originalHTML;
+					return;
+				}
+				
+				if (pageNum > map.maxPage) {
+					errorEl.textContent = `رقم الصفحة غير موجود. الحد الأقصى للصفحات هو ${map.maxPage}.`;
+					errorEl.style.display = "block";
+					submitBtn.disabled = false;
+					submitBtn.innerHTML = originalHTML;
+					return;
+				}
+				
+				const targetSlug = map.pages[pageNum - 1];
+				if (targetSlug) {
+					window.location.href = `/book/${activeBookSlug}/${targetSlug}#page-${pageNum}`;
+				} else {
+					window.location.href = `/book/${activeBookSlug}`;
+				}
+			}
+
+			// Sidebar Jump bindings
+			const sidebarInput = document.getElementById("sidebar-page-input") as HTMLInputElement;
+			const sidebarSubmit = document.getElementById("sidebar-page-submit") as HTMLButtonElement;
+			const sidebarError = document.getElementById("sidebar-page-error");
+
+			if (sidebarInput && sidebarSubmit && sidebarError) {
+				sidebarSubmit.addEventListener("click", () => {
+					navigateToPage(sidebarInput, sidebarError, sidebarSubmit);
+				});
+				sidebarInput.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						navigateToPage(sidebarInput, sidebarError, sidebarSubmit);
+					}
+				});
+			}
+
+			// Modal Jump bindings
+			const pageNavModal = document.getElementById("page-nav-modal");
+			const closePageNav = document.getElementById("close-page-nav");
+			const modalInput = document.getElementById("modal-page-input") as HTMLInputElement;
+			const modalSubmit = document.getElementById("modal-page-submit") as HTMLButtonElement;
+			const modalError = document.getElementById("modal-page-error");
+
+			const openPageNavModal = () => {
+				if (pageNavModal) {
+					pageNavModal.style.display = "flex";
+					document.body.style.overflow = "hidden";
+					modalInput?.focus();
+					if (modalInput) modalInput.value = "";
+					if (modalError) {
+						modalError.style.display = "none";
+						modalError.textContent = "";
+					}
+				}
+			};
+
+			const closePageNavModal = () => {
+				if (pageNavModal) {
+					pageNavModal.style.display = "none";
+					document.body.style.overflow = "auto";
+				}
+			};
+
+			document.addEventListener("click", e => {
+				const target = e.target as HTMLElement;
+				if (target.closest("#page-jump-trigger, #book-page-nav-trigger")) {
+					e.preventDefault();
+					openPageNavModal();
+				}
+			});
+
+			closePageNav?.addEventListener("click", closePageNavModal);
+			pageNavModal?.addEventListener("click", e => {
+				if (e.target === pageNavModal) closePageNavModal();
+			});
+			document.addEventListener("keydown", e => {
+				if (e.key === "Escape" && pageNavModal && pageNavModal.style.display === "flex") {
+					closePageNavModal();
+				}
+			});
+
+			if (modalSubmit && modalInput && modalError) {
+				modalSubmit.addEventListener("click", () => {
+					navigateToPage(modalInput, modalError, modalSubmit);
+				});
+				modalInput.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						navigateToPage(modalInput, modalError, modalSubmit);
+					}
+				});
+			}
+		</script>
+	</body>
+</html>

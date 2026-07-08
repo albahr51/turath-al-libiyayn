@@ -1,0 +1,59 @@
+# build output
+dist/
+
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# media files (too large for GitHub, served via redirects)
+public/media/
+
+# wrangler
+.wrangler/
+
+# temp & upload scripts
+*.bak
+temp-upload/
+upload_state.json
+upload_list.json
+dist.zip
+upload*.py
+upload*.ps1
+resume_upload*.py
+do_upload.ps1
+test_*.py
+test_*.ps1
+deploy*.py
+deploy*.ps1
+deploy*.bat
+deploy*.log
+check_*.py
+generate_*.py
+cleanup_and_upload.py
+analyze_media.py
+gen_*.py
+status.py
+*.log
+body.json
+gh-body.json
+media-excluded/
+media-test/
+tunnel-*.log

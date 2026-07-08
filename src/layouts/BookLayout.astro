@@ -1,0 +1,210 @@
+---
+import Layout from './Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Sidebar from '../components/Sidebar.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  author: string;
+  currentSlug?: string;
+  themeClass?: string;
+  brandTitle?: string;
+  brandSubtitle?: string;
+}
+
+const { 
+  title, 
+  description,
+  author, 
+  currentSlug = "", 
+  themeClass = "",
+  brandTitle,
+  brandSubtitle
+} = Astro.props;
+---
+
+  <Layout title={title} description={description} themeClass={themeClass}>
+  <Header brandTitle={brandTitle} brandSubtitle={brandSubtitle} author={author} />
+  
+  <div class="layout-container">
+    <Sidebar author={author} currentSlug={currentSlug} />
+    
+    <main class="main-content">
+      <slot />
+    </main>
+  </div>
+  
+  <Footer />
+  
+  <!-- Floating Mobile TOC Trigger -->
+  <button id="mobile-toc-toggle" class="mobile-toc-btn" aria-label="فهرس الموضوعات">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="8" y1="6" x2="21" y2="6"></line>
+      <line x1="8" y1="12" x2="21" y2="12"></line>
+      <line x1="8" y1="18" x2="21" y2="18"></line>
+      <line x1="3" y1="6" x2="3.01" y2="6"></line>
+      <line x1="3" y1="12" x2="3.01" y2="12"></line>
+      <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </svg>
+    <span>فهرس الكتاب</span>
+  </button>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- Page Navigation Modal Overlay -->
+  <div id="page-nav-modal" class="page-nav-modal" style="display: none;">
+    <div class="page-nav-modal-content">
+      <div class="page-nav-modal-header">
+        <h3>انتقال سريع لصفحة</h3>
+        <button id="close-page-nav" class="close-page-nav-btn">&times;</button>
+      </div>
+      <div class="page-nav-modal-body">
+        <p class="page-nav-modal-desc">أدخل رقم الصفحة للانتقال المباشر للمبحث المطابق لها.</p>
+        <div class="page-nav-modal-form">
+          <input type="number" id="modal-page-input" min="1" max={author === 'abu-yahya' ? 3113 : 2456} placeholder={`رقم الصفحة (من 1 إلى ${author === 'abu-yahya' ? 3113 : 2456})...`}>
+          <button id="modal-page-submit" class="modal-page-submit-btn">
+            <span>انتقال سريع</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          </button>
+        </div>
+        <div id="modal-page-error" class="modal-page-error" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ author }}>
+  window.activeBookSlug = author;
+</script>
+
+<script>
+  function normArabic(s) {
+    return s.replace(/[\u0610-\u061A\u064B-\u0652\u0670\u06D6-\u06ED\u08F0-\u08FF]/g, '').replace(/[إأآا]/g, 'ا').replace(/[ى]/g, 'ي').replace(/[ة]/g, 'ه').replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي');
+  }
+
+  var searchDone = false;
+
+  function doHighlight(q) {
+    if (searchDone) return;
+    searchDone = true;
+    function norm(s) {
+      return s.replace(/[\u0610-\u061A\u064B-\u0652\u0670\u06D6-\u06ED\u08F0-\u08FF]/g, '').replace(/[إأآا]/g, 'ا').replace(/[ى]/g, 'ي').replace(/[ة]/g, 'ه').replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي');
+    }
+    var term = norm(q).replace(/["'«»\u2018\u2019\u201C\u201D]/g, '').replace(/\s+/g, ' ').trim();
+    if (!term) return;
+    var tlen = term.length;
+    var firstMark = null;
+
+    function highlightInText(orig) {
+      // Build normalized string with original position mapping
+      var normChars = [], origIdx = [];
+      for (var i = 0; i < orig.length; i++) {
+        var c = orig[i];
+        if (/[\u0610-\u061A\u064B-\u0652\u0670\u06D6-\u06ED\u08F0-\u08FF]/.test(c)) continue;
+        normChars.push(c.replace(/[إأآا]/g, 'ا').replace(/[ى]/g, 'ي').replace(/[ة]/g, 'ه').replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي'));
+        origIdx.push(i);
+      }
+      var nstr = normChars.join('');
+      var parts = [], last = 0, si = 0;
+      while (true) {
+        var idx = nstr.indexOf(term, si);
+        if (idx === -1) break;
+        var s = origIdx[idx];
+        var e = idx + tlen < origIdx.length ? origIdx[idx + tlen] : orig.length;
+        if (s > last) parts.push({t: orig.substring(last, s), m: false});
+        parts.push({t: orig.substring(s, e), m: true});
+        last = e;
+        si = idx + tlen;
+      }
+      if (last < orig.length) parts.push({t: orig.substring(last), m: false});
+      if (!parts.length) return null;
+      var frag = document.createDocumentFragment();
+      for (var pi = 0; pi < parts.length; pi++) {
+        if (parts[pi].m) {
+          var mk = document.createElement('mark');
+          mk.style.cssText = 'background:#ffdd57!important;outline:3px solid #e6a800!important;border-radius:4px;padding:0 2px';
+          mk.textContent = parts[pi].t;
+          frag.appendChild(mk);
+          if (!firstMark) firstMark = mk;
+        } else if (parts[pi].t) {
+          frag.appendChild(document.createTextNode(parts[pi].t));
+        }
+      }
+      return frag;
+    }
+
+    function walk(parent) {
+      var child = parent.firstChild;
+      while (child) {
+        var next = child.nextSibling;
+        if (child.nodeType === 3) {
+          var t = child.textContent;
+          if (t && norm(t).indexOf(term) !== -1) {
+            var frag = highlightInText(t);
+            if (frag) child.parentNode.replaceChild(frag, child);
+          }
+        } else if (child.nodeType === 1 && !/^(SCRIPT|STYLE|NOSCRIPT|MARK)$/i.test(child.tagName)) {
+          walk(child);
+        }
+        child = next;
+      }
+    }
+
+    function scan(n) {
+      if (n > 40) return;
+      var el = document.querySelector('.book-content') || document.querySelector('main');
+      if (!el) { setTimeout(function() { scan(n + 1); }, 150); return; }
+      walk(el);
+      if (firstMark) {
+        setTimeout(function() { firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+      }
+    }
+    scan(0);
+  }
+
+  function highlightSearch() {
+    if (searchDone) return;
+    var sq = sessionStorage.getItem('sq');
+    if (sq) { sessionStorage.removeItem('sq'); doHighlight(decodeURIComponent(sq)); return; }
+    var h = window.location.hash;
+    if (h && h.indexOf('q=') === 1) { doHighlight(decodeURIComponent(h.substring(3))); }
+  }
+
+  function initPage() {
+    var emptyHint = document.querySelector('.empty-section-hint');
+    if (emptyHint) {
+      var navNext = document.querySelector('a.nav-next');
+      if (navNext && navNext.getAttribute('href')) {
+        window.location.replace(navNext.getAttribute('href'));
+        return;
+      }
+    }
+
+    document.querySelectorAll('.page-break-marker').forEach(function(el) {
+      var text = el.textContent || '';
+      var match = text.match(/صفحة\s+(\d+)/);
+      if (match) el.id = 'page-' + match[1];
+    });
+
+    highlightSearch();
+
+    var sidebarTree = document.querySelector('.sidebar-tree');
+    if (sidebarTree) {
+      var activeLink = sidebarTree.querySelector('.active');
+      if (activeLink) {
+        var sidebarTreeRect = sidebarTree.getBoundingClientRect();
+        var activeRect = activeLink.getBoundingClientRect();
+        sidebarTree.scrollTop += activeRect.top - sidebarTreeRect.top - sidebarTreeRect.height / 2 + activeRect.height / 2;
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPage);
+  } else {
+    initPage();
+  }
+  window.addEventListener('pageshow', initPage);
+  window.addEventListener('hashchange', highlightSearch);
+</script>

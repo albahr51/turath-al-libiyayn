@@ -1,0 +1,667 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import mediaMappings from '../data/media-mappings.json';
+import allQuotes from '../data/extracted-quotes.json';
+import '../styles/landing.css'; // Global index landing styles
+
+const homepageMedia = mediaMappings.homepage;
+---
+
+<Layout title="الأعمال الكاملة للشيخين الشهيدين أبي يحيى وعطية الله الليبيين" description="الموسوعة العلمية الشاملة لأعمال الشيخين الشهيدين أبي يحيى الليبي وعطية الله الليبي - كتب، أبحاث، محاضرات، ومواد صوتية ومرئية">
+  <Header />
+  
+  <main class="single-layout">
+    <section class="hero-section fade-in">
+      <div class="hero-pattern"></div>
+      <div class="hero-mountains"></div>
+      <div class="hero-container">
+        <div class="portal-badge">الأعمال الكاملة لمشايخ الجهاد</div>
+        <h1 class="hero-title">تراث الشيخين أبي يحيى وعطية الله الليبيَّيْن</h1>
+        <p class="hero-subtitle">مجموع الأعمال الكاملة للشيخ الشهيد أبي يحيى الليبي والشيخ الشهيد عطية الله الليبي تقبلهما الله</p>
+        <p class="hero-compiler">جمع وترتيب: أبي عبد الرحمن الزبير الغزي</p>
+        
+        <div class="hero-covers">
+          <a href="/book/abu-yahya/" class="cover-card">
+            <img src="/media/cover_1.png" alt="غلاف مجموع أعمال الشيخ أبي يحيى الليبي" class="cover-img" />
+            <span class="cover-label">مجموع أعمال الشيخ أبي يحيى الليبي</span>
+          </a>
+          <a href="/book/atiyatullah/" class="cover-card">
+            <img src="/media/cover_2.png" alt="غلاف مجموع أعمال الشيخ عطية الله الليبي" class="cover-img" />
+            <span class="cover-label">مجموع أعمال الشيخ عطية الله الليبي</span>
+          </a>
+        </div>
+        
+        <div class="hero-divider"></div>
+      </div>
+    </section>
+
+    <div class="content-wrapper">
+      <!-- Combined Stats bar -->
+      <section class="combined-stats fade-in">
+        <div class="stat-bubble">
+          <span class="stat-num">5569+</span>
+          <span class="stat-label">صفحة تحوي خلاصة التراث الجهادي المعاصر</span>
+        </div>
+        <div class="stat-bubble">
+          <span class="stat-num">1019+</span>
+          <span class="stat-label">أبواب وفصول منوعة في كافة المسائل الشرعية</span>
+        </div>
+        <div class="stat-bubble">
+          <span class="stat-num">145+</span>
+          <span class="stat-label">مادة علمية مرئية ومسموعة مفرغة نصيا</span>
+        </div>
+        <div class="stat-bubble">
+          <span class="stat-num">100%</span>
+          <span class="stat-label">تنسيق ورقي دقيق موافق للمطبوع</span>
+        </div>
+      </section>
+
+      <div class="photo-strip">
+        <div class="strip-track" id="strip-track">
+          <div class="strip-item" data-src="/media/2.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/3.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/3.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/4.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/4.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/5.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/5.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/6.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/6.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/7.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/7.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/1.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/1.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/2.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/2.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/3.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/3.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/4.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/4.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/5.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/5.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <!-- Duplicate for seamless loop -->
+          <div class="strip-item" data-src="/media/2.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/3.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/3.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/4.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/4.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/5.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/5.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/6.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/6.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/2/7.png" data-name="أبو يحيى الليبي" data-bio="/biography/abu-yahya">
+            <img src="/media/2/7.png" alt="أبو يحيى الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>أبو يحيى الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/1.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/1.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/2.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/2.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/3.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/3.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/4.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/4.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+          <div class="strip-item" data-src="/media/1/5.jpg" data-name="عطية الله الليبي" data-bio="/biography/atiyatullah">
+            <img src="/media/1/5.jpg" alt="عطية الله الليبي" loading="lazy" />
+            <div class="strip-item-overlay"><span>عطية الله الليبي</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Strip Lightbox -->
+      <div class="strip-lightbox" id="strip-lightbox">
+        <button class="strip-lightbox-close" id="lb-close">&times;</button>
+        <div class="strip-lightbox-content">
+          <button class="strip-lightbox-nav" id="lb-prev">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div class="strip-lightbox-image-wrap">
+            <img id="lb-img" src="" alt="" />
+            <div class="strip-lightbox-caption">
+              <div class="strip-lightbox-name" id="lb-name"></div>
+              <a class="strip-lightbox-link" id="lb-link" href="">عرض السيرة الذاتية</a>
+            </div>
+          </div>
+          <button class="strip-lightbox-nav" id="lb-next">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+        <div class="strip-lightbox-counter" id="lb-counter"></div>
+      </div>
+
+      <!-- The Dual Books Section -->
+      <section class="books-portal-section fade-in">
+        <h2 class="section-title">موسوعات المكتبة</h2>
+        <p class="section-desc">تصفح وقراءة الموسوعات العلمية الكاملة والمحققة لكلا الشيخين بشكل مستقل</p>
+        
+        <div class="books-grid">
+          <!-- Book 1 Card -->
+          <article class="book-portal-card border-green">
+            <div class="card-glow green"></div>
+            <h3 class="book-card-title" style="text-align:center">مجموع أعمال الشيخ أبي يحيى الليبي</h3>
+            <p class="book-card-author" style="text-align:center">الشيخ الشهيد حسن محمد قائد (رحمه الله)</p>
+            <p class="book-card-desc">مجموع الأعمال الكاملة للشيخ المجاهد الشهيد .. بما في ذلك كتبه ورسائله وفتاويه والمحاضرات المرئية والصوتية والمراسلات والوثائق الخاصة؛ مما لا يستغنى عنه المجاهد والعامل لدين الله تعالى</p>
+            
+            <div class="book-mini-stats">
+              <div class="mini-stat">
+                <span class="mini-num">3113</span>
+                <span class="mini-lbl">صفحة</span>
+              </div>
+              <div class="mini-stat">
+                <span class="mini-num">383</span>
+                <span class="mini-lbl">باب وفصل</span>
+              </div>
+              <div class="mini-stat">
+                <span class="mini-num">15728</span>
+                <span class="mini-lbl">مبحث ومطلب</span>
+              </div>
+            </div>
+            
+            <div class="book-card-actions">
+              <a href="/book/abu-yahya" class="btn btn-portal-primary bg-green-btn">
+                <span>تصفح الموسوعة الكاملة</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </a>
+              
+              <div class="download-links">
+                <a href={`/media/${homepageMedia.abu_yahya_pdf}`} download class="btn-download pdf-btn" title="تحميل الكتاب مصورًا PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل PDF مصور</span>
+                </a>
+                <a href={`/media/${homepageMedia.abu_yahya_docx}`} download class="btn-download docx-btn" title="تحميل الكتاب نصيًا Word">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل Word نصي</span>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Book 2 Card -->
+          <article class="book-portal-card border-gold">
+            <div class="card-glow gold"></div>
+            <h3 class="book-card-title" style="text-align:center">مجموع أعمال الشيخ عطية الله الليبي</h3>
+            <p class="book-card-author" style="text-align:center">الشيخ الشهيد جمال إبراهيم اشتيوي (رحمه الله)</p>
+            <p class="book-card-desc">الأعمال الكاملة والمتنوعة للشيخ المجاهد الشهيد .. من كتب فقهية وأصولية وفتاوى ومحاضرات مفرغة ومرئيات ووثائق خاصة؛ زاد علمي لا غنى عنه لكل مجاهد وداعية</p>
+            
+            <div class="book-mini-stats">
+              <div class="mini-stat">
+                <span class="mini-num">2456</span>
+                <span class="mini-lbl">صفحة</span>
+              </div>
+              <div class="mini-stat">
+                <span class="mini-num">636</span>
+                <span class="mini-lbl">باب وفصل</span>
+              </div>
+              <div class="mini-stat">
+                <span class="mini-num">19803</span>
+                <span class="mini-lbl">مبحث ومطلب</span>
+              </div>
+            </div>
+            
+            <div class="book-card-actions">
+              <a href="/book/atiyatullah" class="btn btn-portal-primary bg-gold-btn">
+                <span>تصفح الموسوعة الكاملة</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </a>
+              
+              <div class="download-links">
+                <a href={`/media/${homepageMedia.atiyatullah_pdf}`} download class="btn-download pdf-btn" title="تحميل الكتاب مصورًا PDF">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل PDF مصور</span>
+                </a>
+                <a href={`/media/${homepageMedia.atiyatullah_docx}`} download class="btn-download docx-btn" title="تحميل الكتاب نصيًا Word">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل Word نصي</span>
+                </a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Scholars Biographies Grid -->
+      <section class="scholars-section fade-in">
+        <h2 class="section-title">سيرة الشيخين ومسيرتهما</h2>
+        <p class="section-desc">عرض تفاعلي مختصر للسيرة الذاتية والمحطات الكبرى في حياة الشيخين رحمهما الله</p>
+        
+        <div class="scholars-grid">
+          <!-- Scholar 1 Biography Card -->
+          <div class="scholar-bio-card">
+            <div class="scholar-avatar-container" style="padding: 0; overflow: hidden; background: #fff;">
+              <img src="/media/2.png" alt="الشيخ الشهيد أبو يحيى الليبي" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+            </div>
+            <h3 class="scholar-name">الشيخ الشهيد أبو يحيى الليبي</h3>
+            <p class="scholar-title">حسن محمد قائد (١٣٨٢ - ١٤٣٣ هـ) الموافق (١٩٦٣ - ٢٠١٢ م)</p>
+            <p class="scholar-excerpt">عالم ومفتي وشاعر ليبي، قرأ العلوم الشرعية في محاضر موريتانيا وتخصص في أصول الفقه، واشتهر بهروبه التاريخي الأسطوري من سجن باجرام العسكري سنة ٢٠٠٥م ليقود العمل العلمي بعدها. واستمر في عمله الجهادي في أفغانستان حتى ارتقى شهيدًا في غارة أمريكية غادرة بمنطقة وزيرستان في ١٤ رجب ١٤٣٣ هـ (٤ يونيو ٢٠١٢ م) عن عمر يناهز ٤٩ عامًا.</p>
+            <a href="/biography/abu-yahya" class="btn-read-bio green-link">
+              <span>تصفح السيرة والجدول الزمني التفاعلي</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </a>
+          </div>
+
+          <!-- Scholar 2 Biography Card -->
+          <div class="scholar-bio-card">
+            <div class="scholar-avatar-container" style="padding: 0; overflow: hidden; background: #fff;">
+              <img src="/media/1.jpg" alt="الشيخ الشهيد عطية الله الليبي" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+            </div>
+            <h3 class="scholar-name">الشيخ الشهيد عطية الله الليبي</h3>
+            <p class="scholar-title">جمال إبراهيم اشتيوي (١٣٩٠ - ١٤٣٢ هـ) الموافق (١٩٧٠ - ٢٠١١ م)</p>
+            <p class="scholar-excerpt">مفتي وباحث شرعي ومخطط ليبي، رافق الشيخ أبا يحيى في رحلة طلب العلم في شنقيط، وعرف بعلمه الغزير وسعة أفقه ومهارته الكبيرة في معالجة القضايا والمسائل المنهجية والفقهية المستجدة للأمة. واستمر في عمله الجهادي في أفغانستان حتى ارتقى شهيدًا في غارة أمريكية غادرة بمنطقة وزيرستان ليلة ٢٣ رمضان ١٤٣٢ هـ (٢٣ أغسطس ٢٠١١ م) عن عمر يناهز ٤١ عامًا.</p>
+            <a href="/biography/atiyatullah" class="btn-read-bio gold-link">
+              <span>تصفح السيرة والجدول الزمني التفاعلي</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dynamic quotes carousel section (JS-driven, single slide) -->
+      <section class="quotes-section fade-in">
+        <h2 class="section-title">من درر ومأثورات الشيخين</h2>
+        
+        <div class="quotes-carousel-wrapper">
+          <button class="carousel-btn carousel-prev" aria-label="السابق">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+          <div class="quotes-carousel">
+            <div class="quote-slide active" id="current-quote-slide">
+              <blockquote class="quote-text" id="current-quote-text" title="انقر للنسخ مع العزو">
+                <span class="quote-bracket quote-bracket-open">“</span>
+                <span id="quote-body"></span>
+                <span class="quote-bracket quote-bracket-close">”</span>
+              </blockquote>
+              <div class="quote-source" id="quote-source"></div>
+              <div class="quote-counter" id="quote-counter"></div>
+              <div class="quote-jump">
+                <button class="jump-btn jump-down" id="jump-down" aria-label="رقم أقل">−</button>
+                <input type="number" class="jump-input" id="jump-input" min="1" placeholder="رقم" value="1" />
+                <button class="jump-btn jump-up" id="jump-up" aria-label="رقم أعلى">+</button>
+                <button class="jump-go" id="jump-go">↵</button>
+              </div>
+            </div>
+          </div>
+          <button class="carousel-btn carousel-next" aria-label="التالي">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="copy-toast" class="copy-toast">تم النسخ مع العزو ✓</div>
+  <Footer />
+</Layout>
+
+<script>
+  // Scholar name highlighting
+  function highlightScholarNames() {
+    const names = ["أبو يحيى الليبي", "أبي يحيى الليبي", "عطية الله الليبي"];
+    const textNodes = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.parentElement?.closest('script, style, .scholar-name-highlight')) continue;
+      textNodes.push(node);
+    }
+    for (const node of textNodes) {
+      let text = node.textContent;
+      let replaced = false;
+      for (const name of names) {
+        if (text.includes(name)) {
+          text = text.replaceAll(name, `<span class="scholar-name-highlight">${name}</span>`);
+          replaced = true;
+        }
+      }
+      if (replaced) {
+        const span = document.createElement('span');
+        span.innerHTML = text;
+        node.parentNode.replaceChild(span, node);
+      }
+    }
+  }
+  document.addEventListener('DOMContentLoaded', highlightScholarNames);
+
+  // Dynamic quotes carousel
+  import quotesData from '../data/extracted-quotes.json';
+  document.addEventListener('DOMContentLoaded', function() {
+    const quotes = quotesData;
+
+    const quoteBody = document.getElementById("quote-body");
+    const quoteSource = document.getElementById("quote-source");
+    const quoteCounter = document.getElementById("quote-counter");
+    const prevBtn = document.querySelector(".carousel-prev");
+    const nextBtn = document.querySelector(".carousel-next");
+    const quoteBlock = document.getElementById("current-quote-text");
+    const toast = document.getElementById("copy-toast");
+
+    let currentIndex = Math.floor(Math.random() * quotes.length);
+    let toastTimer;
+
+    function renderQuote(index) {
+      const q = quotes[index];
+      if (!q) return;
+      currentIndex = ((index % quotes.length) + quotes.length) % quotes.length;
+      const qq = quotes[currentIndex];
+      quoteBody.textContent = qq.text;
+      const authorLabel = qq.author === 'abu-yahya' ? 'الشيخ أبو يحيى الليبي' : 'الشيخ عطية الله الليبي';
+      quoteSource.innerHTML = `<a href="${qq.url}" class="source-link">${authorLabel} - ${qq.title}</a>`;
+      quoteCounter.textContent = `${currentIndex + 1} / ${quotes.length}`;
+      const attribution = `${qq.author === 'abu-yahya' ? 'مجموع الشيخ أبي يحيى الليبي' : 'مجموع الشيخ عطية الله الليبي'} (ص ${qq.page}) - ${qq.title}`;
+      quoteBlock.setAttribute('data-copy-text', `${qq.text}\n\n${attribution}`);
+    }
+
+    function nextQuote() { renderQuote(currentIndex + 1); }
+    function prevQuote() { renderQuote(currentIndex - 1); }
+
+    prevBtn?.addEventListener("click", prevQuote);
+    nextBtn?.addEventListener("click", nextQuote);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") prevQuote();
+      if (e.key === "ArrowLeft") nextQuote();
+    });
+
+    quoteBlock?.addEventListener("click", () => {
+      const copyText = quoteBlock.getAttribute("data-copy-text") || "";
+      if (copyText) navigator.clipboard.writeText(copyText).catch(() => {});
+      toast.textContent = "تم النسخ مع العزو ✓";
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
+    });
+
+    // Autoplay
+    setInterval(nextQuote, 8000);
+
+    renderQuote(currentIndex);
+
+    // Quote jump input
+    const jumpInput = document.getElementById("jump-input");
+    if (jumpInput) jumpInput.max = quotes.length;
+    const jumpDown = document.getElementById("jump-down");
+    const jumpUp = document.getElementById("jump-up");
+    const jumpGo = document.getElementById("jump-go");
+
+    function updateInputValue() {
+      if (jumpInput) jumpInput.value = currentIndex + 1;
+    }
+
+    function goToInput() {
+      const val = parseInt(jumpInput?.value, 10);
+      if (!isNaN(val) && val >= 1 && val <= quotes.length) {
+        renderQuote(val - 1);
+        updateInputValue();
+      } else {
+        updateInputValue();
+      }
+    }
+
+    jumpDown?.addEventListener("click", () => {
+      renderQuote(currentIndex - 1);
+      updateInputValue();
+    });
+    jumpUp?.addEventListener("click", () => {
+      renderQuote(currentIndex + 1);
+      updateInputValue();
+    });
+    jumpGo?.addEventListener("click", goToInput);
+    jumpInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") goToInput();
+    });
+
+    // Override renderQuote to sync input
+    const origRender = renderQuote;
+    renderQuote = function(index) {
+      origRender(index);
+      updateInputValue();
+    };
+
+    updateInputValue();
+  });
+
+  // Scroll Reveal — Intersection Observer
+  document.addEventListener('DOMContentLoaded', function() {
+    const revealEls = document.querySelectorAll('.fade-in');
+    if (!revealEls.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -60px 0px'
+    });
+
+    revealEls.forEach(el => observer.observe(el));
+  });
+
+  // Cover cards touch support — toggle zoom on tap
+  document.addEventListener('DOMContentLoaded', function() {
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!isTouch) return;
+
+    const covers = document.querySelectorAll('.cover-card');
+    covers.forEach(card => {
+      card.addEventListener('click', function(e) {
+        const alreadyTouched = this.classList.contains('touched');
+        covers.forEach(c => c.classList.remove('touched'));
+        if (!alreadyTouched) {
+          this.classList.add('touched');
+        }
+      });
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.cover-card')) {
+        covers.forEach(c => c.classList.remove('touched'));
+      }
+    });
+  });
+
+  // Strip Lightbox
+  document.addEventListener('DOMContentLoaded', function() {
+    const items = document.querySelectorAll('.strip-item');
+    const lightbox = document.getElementById('strip-lightbox');
+    const lbImg = document.getElementById('lb-img');
+    const lbName = document.getElementById('lb-name');
+    const lbLink = document.getElementById('lb-link');
+    const lbCounter = document.getElementById('lb-counter');
+    const lbPrev = document.getElementById('lb-prev');
+    const lbNext = document.getElementById('lb-next');
+    const lbClose = document.getElementById('lb-close');
+    const track = document.getElementById('strip-track');
+
+    if (!lightbox || !items.length) return;
+
+    let currentIndex = 0;
+    // Build array of unique items (skip duplicates)
+    function getUniqueItems() {
+      const seen = new Set();
+      const result = [];
+      items.forEach((item, i) => {
+        const src = item.getAttribute('data-src');
+        if (!seen.has(src)) {
+          seen.add(src);
+          result.push({ element: item, index: i });
+        }
+      });
+      return result;
+    }
+
+    let uniqueItems = getUniqueItems();
+
+    function pauseStrip() {
+      track?.classList.add('paused');
+    }
+
+    function resumeStrip() {
+      track?.classList.remove('paused');
+    }
+
+    function openLightbox(index) {
+      const entry = uniqueItems[index];
+      if (!entry) return;
+      currentIndex = index;
+      const item = entry.element;
+      const src = item.getAttribute('data-src');
+      const name = item.getAttribute('data-name');
+      const bio = item.getAttribute('data-bio');
+
+      lbImg.src = src || '';
+      lbImg.alt = name || '';
+      lbName.textContent = name || '';
+      lbLink.href = bio || '#';
+      lbCounter.textContent = (index + 1) + ' / ' + uniqueItems.length;
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      pauseStrip();
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+      resumeStrip();
+    }
+
+    function prevImage() {
+      const idx = (currentIndex - 1 + uniqueItems.length) % uniqueItems.length;
+      openLightbox(idx);
+    }
+
+    function nextImage() {
+      const idx = (currentIndex + 1) % uniqueItems.length;
+      openLightbox(idx);
+    }
+
+    // Click on strip item
+    items.forEach((item, i) => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        const src = this.getAttribute('data-src');
+        // Find in unique items
+        const found = uniqueItems.findIndex(u => u.element === this);
+        if (found !== -1) {
+          openLightbox(found);
+        } else {
+          // Duplicate item - find by src
+          const idx = uniqueItems.findIndex(u => u.element.getAttribute('data-src') === src);
+          if (idx !== -1) openLightbox(idx);
+        }
+      });
+    });
+
+    // Lightbox controls
+    lbClose?.addEventListener('click', closeLightbox);
+    lbPrev?.addEventListener('click', prevImage);
+    lbNext?.addEventListener('click', nextImage);
+
+    lightbox?.addEventListener('click', function(e) {
+      if (e.target === this) closeLightbox();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (!lightbox?.classList.contains('active')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') nextImage();
+      if (e.key === 'ArrowRight') prevImage();
+    });
+
+    // Rebuild unique items if more are added dynamically
+    // (for duplicate detection)
+    function refreshUniqueItems() {
+      uniqueItems = getUniqueItems();
+    }
+
+    // Handle resize
+    window.addEventListener('resize', refreshUniqueItems);
+  });
+
+</script>

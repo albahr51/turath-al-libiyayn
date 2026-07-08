@@ -1,0 +1,103 @@
+---
+import { getCollection } from 'astro:content';
+import printMappings from '../../../../data/print-mappings.json';
+import '../../../../styles/book-page.css';
+import '../../../../styles/book-other.css';
+
+export async function getStaticPaths() {
+  const paths = [];
+
+  for (const author of Object.keys(printMappings)) {
+    const authorMappings = printMappings[author as keyof typeof printMappings];
+    for (const printId of Object.keys(authorMappings)) {
+      paths.push({
+        params: {
+          author,
+          id: printId
+        },
+        props: {
+          author,
+          startPage: printId
+        }
+      });
+    }
+  }
+  return paths;
+}
+
+const { author, startPage } = Astro.props;
+const authorInfo = {
+  'abu-yahya': {
+    compilationTitle: "مجموع أعمال الشيخ أبي يحيى الليبي",
+    authorName: "الشيخ أبي يحيى الليبي",
+    pdfPath: "/media/مجموع أعمال الشيخ أبي يحيى.pdf",
+    themeClass: "theme-green"
+  },
+  'atiyatullah': {
+    compilationTitle: "مجموع أعمال الشيخ عطية الله الليبي",
+    authorName: "الشيخ عطية الله الليبي",
+    pdfPath: "/media/مجموع_الشيخ_عطية_الله_الطبعة_الثانية.pdf",
+    themeClass: "theme-gold"
+  }
+}[author as 'abu-yahya' | 'atiyatullah'];
+
+const extractedPdfUrl = `/media/extracted/${author}/${startPage}.pdf`;
+
+// Look up title from print-mappings for display
+const allEntries = await getCollection('books');
+const mappings = (printMappings as Record<string, Record<string, string[]>>);
+const slugs = mappings[author]?.[startPage] || [];
+const matchedEntry = allEntries.find(e => e.data.author === author && e.data.slug === slugs[0]);
+const bookTitle = matchedEntry?.data?.title || startPage;
+---
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{bookTitle} | معاينة الطباعة وحفظ PDF</title>
+  <meta name="robots" content="noindex, nofollow">
+  <!-- Google Fonts (Amiri for text body, Tajawal for interface and headings) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class={authorInfo.themeClass}>
+  <!-- Top Action Bar (hidden when printing) -->
+  <div class="print-control-bar" id="print-bar">
+    <div class="control-title">
+      تحميل كتاب: <span>{bookTitle}</span>
+    </div>
+    <div class="control-actions">
+      <button class="print-btn" id="print-now-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        <span>تحميل الكتاب مفردًا</span>
+      </button>
+      <button class="close-btn" id="close-preview-btn">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- PDF Viewer -->
+  <div class="print-canvas" style="padding:0;height:calc(100vh - 60px);overflow:hidden">
+    <iframe 
+      src={extractedPdfUrl}
+      style="width:100%;height:100%;border:none"
+      title="عرض PDF"
+    ></iframe>
+  </div>
+
+  <script>
+    document.getElementById("print-now-btn")?.addEventListener("click", () => {
+      window.print();
+    });
+    document.getElementById("close-preview-btn")?.addEventListener("click", () => {
+      window.close();
+    });
+  </script>
+</body>
+</html>

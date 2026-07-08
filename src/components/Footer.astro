@@ -1,0 +1,18 @@
+---
+interface Props {
+  copyText?: string;
+  descText?: string;
+}
+
+const { 
+  copyText = "مجموع الأعمال الكاملة للشيخين الشهيدين عطية الله وأبي يحيى الليبيَّين", 
+  descText = "موقع وقفي يُعني بنشر الأعمال الكاملة للشيخين، وحقوق النشر فيه غير محفوظة، فانشر تؤجر {وَحَرِّضِ المُؤْمِنِينَ}"
+} = Astro.props;
+---
+
+<footer class="app-footer">
+  <div class="footer-container">
+    <p class="footer-copy">{copyText}</p>
+    <p class="footer-desc">{descText}</p>
+  </div>
+</footer>

@@ -1,0 +1,429 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import '../../../styles/book-index.css';
+import printMappings from '../../../data/print-mappings.json';
+import atiyatullahIndex from '../../../data/atiyatullah-index.json';
+
+export function getStaticPaths() {
+  return [
+    { params: { author: 'abu-yahya' } },
+    { params: { author: 'atiyatullah' } }
+  ];
+}
+
+const { author } = Astro.params;
+
+// Load the sidebar JSON to render the main parts dynamically
+import sidebarAbuYahya from '../../../data/sidebar-abu-yahya.json';
+import sidebarAtiyatullah from '../../../data/sidebar-atiyatullah.json';
+
+const sidebarData = author === 'abu-yahya' ? sidebarAbuYahya : sidebarAtiyatullah;
+
+// Helper: get actual PDF page number from print-mappings
+function getPdfPage(slug: string): number | null {
+  const authorMap = (printMappings as Record<string, Record<string, string[]>>)[author];
+  if (!authorMap) return null;
+  for (const [pageStr, slugs] of Object.entries(authorMap)) {
+    if (slugs.includes(slug)) return parseInt(pageStr);
+  }
+  return null;
+}
+
+const config = {
+  'abu-yahya': {
+    title: "مجموع أعمال الشيخ أبي يحيى الليبي",
+    subtitle: "الأعمال الكاملة",
+    authorName: "الشيخ أبي يحيى الليبي (رحمه الله)",
+    desc: "الأعمال الكاملة والمكتبة العلمية الشاملة للشيخ الشهيد أبي يحيى الليبي رحمه الله تشتمل على الكتب والأبحاث والمحاضرات.",
+    themeClass: "theme-green",
+    bookFullTitle: "مجموع الأعمال الكاملة للشيخ الشهيد أبي يحيى الليبي",
+    authorFullName: "حسن محمد قائد (تقبله الله في الشهداء)",
+    coverImage: "/media/cover_1.png",
+    pdfLink: "/media/مجموع أعمال الشيخ أبي يحيى.pdf",
+    docxLink: "/media/مجموع أعمال الشيخ أبي يحيى.docx",
+    stats: [
+      { num: "٣٬١١٣", label: "صفحة مطبوعة" },
+      { num: "٣٨٣", label: "أبواب وفصول مبوبة" },
+      { num: "١٥٬٧٢٨", label: "مبحث ومطلب شرعي" },
+      { num: "٢١ قصيدة + ٦٠ بيتًا", label: "شعر ونظم الشيخ أبي يحيى" }
+    ]
+  },
+  'atiyatullah': {
+    title: "مجموع أعمال الشيخ عطية الله الليبي",
+    subtitle: "الأعمال الكاملة",
+    authorName: "الشيخ عطية الله الليبي (رحمه الله)",
+    desc: "الأعمال الكاملة والمكتبة العلمية الشاملة للشيخ الشهيد عطية الله الليبي رحمه الله تشتمل على الكتب والرسائل العلمية والفتاوى والردود.",
+    themeClass: "theme-gold",
+    bookFullTitle: "مجموع الأعمال الكاملة للشيخ الشهيد عطية الله الليبي",
+    authorFullName: "جمال إبراهيم اشتيوي (تقبله الله في الشهداء)",
+    coverImage: "/media/cover_2.png",
+    pdfLink: "/media/مجموع_الشيخ_عطية_الله_الطبعة_الثانية.pdf",
+    docxLink: "/media/مجموع_الشيخ_عطية_الله_الطبعة_الثانية.docx",
+    stats: [
+      { num: "٢٬٤٥٦", label: "صفحة مطبوعة" },
+      { num: "٦٣٦", label: "أبواب وفصول مبوبة" },
+      { num: "١٩٬٨٠٣", label: "مبحث ومطلب شرعي" },
+      { num: "١٠٠%", label: "تنسيق دقيق" }
+    ]
+  }
+}[author];
+
+const startReadingLink = sidebarData[0]?.link || `/book/${author}/1-بين-يدي-المجموع`;
+---
+
+<Layout title={config.title} description={`${config.desc} تصفح الكتب والأبحاث والمحاضرات`} themeClass={config.themeClass}>
+  <Header brandTitle={config.title} brandSubtitle={config.subtitle} author={author} />
+  
+  <main class="single-layout">
+    <div class="book-subportal {config.themeClass} fade-in">
+      <!-- Inner Book Hero -->
+      <section class="subportal-hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-mountains"></div>
+        <div class="hero-container">
+          <p class="hero-full-title">{config.bookFullTitle}</p>
+          <p class="hero-author-name">{config.authorFullName}</p>
+          
+          <div class="hero-cover-side"><img src={config.coverImage} alt={`غلاف ${config.title}`} class="hero-cover-img" /></div>
+          
+          <div class="hero-actions">
+            <a href={startReadingLink} class="btn btn-start-reading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+              <span>البدء بالقراءة الفورية</span>
+            </a>
+            
+            <button id="book-page-nav-trigger" class="btn btn-page-nav-trigger" title="انتقال سريع لصفحة">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <span>انتقال لصفحة</span>
+            </button>
+
+            <a href={`/biography/${author}`} class="btn btn-biography">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>سيرة الشيخ</span>
+            </a>
+            
+            <div class="subportal-download-links">
+              <a href={config.pdfLink} download class="btn btn-subportal-download" title="تحميل الكتاب مفردًا">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>تحميل الكتاب مفردًا</span>
+              </a>
+              
+              <a href={config.docxLink} download class="btn btn-subportal-download" title="تحميل الكتاب مفردًا">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>تحميل الكتاب مفردًا</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <div class="content-container">
+        <!-- Book Stats -->
+        <section class="book-stats">
+          {config.stats.map(s => (
+            <div class="stat-card">
+              <span class="stat-num">{s.num}</span>
+              <span class="stat-label">{s.label}</span>
+            </div>
+          ))}
+        </section>
+        
+        <!-- Level 1 Navigation Cards -->
+        <section class="parts-section">
+          <h2 class="section-title">فهرس الكتب والمقالات والصوتيات المفرغة</h2>
+          <p class="section-desc">اضغط على أي كتاب بالأسفل لتتنقل لقراءته مباشرة وتبدأ بالاطلاع على فصوله وأبوابه</p>
+          
+          <div class="parts-grid">
+            {author === 'atiyatullah' 
+              ? atiyatullahIndex.flatMap((section) => {
+                  const cards = [];
+                  // Section divider
+                  cards.push(
+                    <div class="section-divider">
+                      <span class="section-divider-line"></span>
+                      <span class="section-divider-title">{section.divider}</span>
+                      <span class="section-divider-line"></span>
+                    </div>
+                  );
+                  // Items
+                  for (const item of section.items) {
+                    if (!item.page) continue;
+                    const printLink = item.slug ? `/media/extracted/${author}/${item.slug}.pdf` : '#';
+                    cards.push(
+                      <div class="part-card part-card-child">
+                        {item.slug 
+                          ? <a href={`/book/${author}/${item.slug}`} class="part-card-inner">
+                              <div class="part-card-header">
+                                <div class="part-card-icon">
+                                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                  </svg>
+                                </div>
+                                <div class="part-card-title-wrap">
+                                  <h3 class="part-card-title">{item.title}</h3>
+                                  <span class="part-card-page">ص {item.page}</span>
+                                </div>
+                              </div>
+                            </a>
+                          : <div class="part-card-inner">
+                              <div class="part-card-header">
+                                <div class="part-card-icon">
+                                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                  </svg>
+                                </div>
+                                <div class="part-card-title-wrap">
+                                  <h3 class="part-card-title">{item.title}</h3>
+                                  <span class="part-card-page">ص {item.page}</span>
+                                </div>
+                              </div>
+                            </div>
+                        }
+                        <a href={printLink} class="btn-card-download" title="عرض الكتاب مباشرة" target="_blank">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                          <span>تحميل</span>
+                        </a>
+                      </div>
+                    );
+                  }
+                  return cards;
+                })
+              : sidebarData.flatMap((part, index) => {
+                const trimmedTitle = part.title.replace(/\n/g, ' ').trim();
+                const isSectionDivider = trimmedTitle.startsWith('القسم') || trimmedTitle.startsWith('بين يدي المجموع') || trimmedTitle.startsWith('الفهارس العلمية');
+                const partSlug = part.link.split('/').pop();
+                const partPage = getPdfPage(partSlug);
+                const partCards = [];
+
+                // For atiyatullah, add custom section dividers
+                if (author === 'atiyatullah') {
+                  if (index === 0) {
+                    partCards.push(
+                      <div class="section-divider">
+                        <span class="section-divider-line"></span>
+                        <span class="section-divider-title">مقدمات بين يدي المجموع</span>
+                        <span class="section-divider-line"></span>
+                      </div>
+                    );
+                  } else if (index === 13) {
+                    partCards.push(
+                      <div class="section-divider">
+                        <span class="section-divider-line"></span>
+                        <span class="section-divider-title">كتب الشيخ ورسائله وحواراته الكبيرة</span>
+                        <span class="section-divider-line"></span>
+                      </div>
+                    );
+                  }
+                }
+
+                // Items 0-12 in atiyatullah sidebar are preambles (مقدمات)
+                const isPreamble = author === 'atiyatullah' && index <= 12;
+                // Hide chapter cards under specific parent items (individual sub-titles)
+                const hideChapters = author === 'atiyatullah' && [13, 14, 16].includes(index);
+
+                if (isSectionDivider) {
+                  partCards.push(
+                    <div class="section-divider">
+                      <span class="section-divider-line"></span>
+                      <a href={part.link} class="section-divider-title">{part.title.replace(/\n/g, ' ')}</a>
+                      <span class="section-divider-line"></span>
+                    </div>
+                  );
+                } else {
+                  partCards.push(
+                    <div class="part-card part-card-top">
+                      <a href={part.link} class="part-card-inner">
+                        <div class="part-card-header">
+                          <div class="part-card-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                          </div>
+                          <h3 class="part-card-title">{part.title}</h3>
+                        </div>
+                        <p class="part-card-desc">انقر لاستعراض كامل مباحث ومحتويات هذا القسم الفقهي أو الأصولي بالكامل.</p>
+                        <div class="part-card-link">
+                          <span>تصفح القسم</span>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                          </svg>
+                        </div>
+                      </a>
+                    </div>
+                  );
+                }
+
+                // Chapter cards under this part — only for non-preamble items and non-hidden items
+                if (!isPreamble && !hideChapters && part.chapters) {
+                  for (const ch of part.chapters) {
+                    const chSlug = ch.link.split('/').pop();
+                    const chPrintLink = chSlug ? `/media/extracted/${author}/${chSlug}.pdf` : ch.link;
+                    partCards.push(
+                      <div class="part-card part-card-child">
+                        <a href={ch.link} class="part-card-inner">
+                          <div class="part-card-header">
+                            <div class="part-card-icon">
+                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                              </svg>
+                            </div>
+                            <h3 class="part-card-title">{ch.title}</h3>
+                          </div>
+                        </a>
+                        <a href={chPrintLink} class="btn-card-download" title="عرض الكتاب مباشرة" target="_blank">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                          <span>تحميل الكتاب مفردًا</span>
+                        </a>
+                      </div>
+                    );
+                  }
+                }
+                return partCards;
+              })
+            }
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  
+  <Footer />
+
+  <!-- Page Navigation Modal Overlay -->
+  <div id="page-nav-modal" class="page-nav-modal" style="display: none;">
+    <div class="page-nav-modal-content">
+      <div class="page-nav-modal-header">
+        <h3>انتقال سريع لصفحة</h3>
+        <button id="close-page-nav" class="close-page-nav-btn">&times;</button>
+      </div>
+      <div class="page-nav-modal-body">
+        <p class="page-nav-modal-desc">أدخل رقم الصفحة للانتقال المباشر للمبحث المطابق لها.</p>
+        <div class="page-nav-modal-form">
+          <input 
+            type="number" 
+            id="modal-page-input" 
+            min="1" 
+            max={author === 'abu-yahya' ? 3113 : 2456} 
+            placeholder={`رقم الصفحة (من 1 إلى ${author === 'abu-yahya' ? 3113 : 2456})...`}
+          />
+          <button id="modal-page-submit" class="modal-page-submit-btn">
+            <span>انتقال سريع</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div id="modal-page-error" class="modal-page-error" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ author }}>
+  // Modal Page navigation
+  const triggerBtn = document.getElementById('book-page-nav-trigger');
+  const closeBtn = document.getElementById('close-page-nav');
+  const modal = document.getElementById('page-nav-modal');
+  const pageInput = document.getElementById('modal-page-input');
+  const pageSubmit = document.getElementById('modal-page-submit');
+  const pageError = document.getElementById('modal-page-error');
+
+  let pageMap = null;
+
+  async function loadPageMap() {
+    if (!pageMap) {
+      try {
+        const response = await fetch(`/page-maps/${author}.json`);
+        pageMap = await response.json();
+      } catch (err) {
+        console.error("Failed to load page map:", err);
+      }
+    }
+    return pageMap;
+  }
+
+  triggerBtn?.addEventListener('click', () => {
+    if (modal) modal.style.display = 'flex';
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    if (modal) modal.style.display = 'none';
+  });
+
+  async function handlePageSubmit() {
+    if (!pageInput) return;
+    const pageNum = parseInt(pageInput.value, 10);
+    
+    if (isNaN(pageNum)) return;
+    
+    const map = await loadPageMap();
+    if (!map) {
+      showError("حدث خطأ في تحميل خريطة الصفحات");
+      return;
+    }
+
+    if (pageNum < 1 || pageNum > map.maxPage) {
+      showError(`الرجاء إدخال رقم صفحة بين 1 و ${map.maxPage}`);
+      return;
+    }
+
+    const slug = map.pages[pageNum];
+    if (slug) {
+      if (modal) modal.style.display = 'none';
+      window.location.href = `/book/${author}/${slug}#page-${pageNum}`;
+    } else {
+      showError("لم يتم العثور على الصفحة المطلوبة");
+    }
+  }
+
+  function showError(msg) {
+    if (pageError) {
+      pageError.textContent = msg;
+      pageError.style.display = 'block';
+    }
+  }
+
+  pageSubmit?.addEventListener('click', handlePageSubmit);
+  pageInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handlePageSubmit();
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      if (modal) modal.style.display = 'none';
+    }
+  });
+</script>

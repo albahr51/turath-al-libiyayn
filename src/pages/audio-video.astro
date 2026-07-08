@@ -1,0 +1,1039 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import mediaMappings from '../data/media-mappings.json';
+import { getCollection } from 'astro:content';
+import '../styles/book-page.css';
+import 'plyr/dist/plyr.css';
+
+// Build a slug-to-author lookup at build time
+const allEntries = await getCollection('books');
+const slugAuthor = new Map<string, string>();
+for (const entry of allEntries) {
+  slugAuthor.set(entry.data.slug, entry.data.author);
+}
+
+// Author display configuration
+const authorConfig = {
+  'abu-yahya': { name: 'الشيخ أبو يحيى الليبي', cssClass: 'author-green', folder: 'أبو يحيى الليبي؛ رحمه الله' },
+  'atiyatullah': { name: 'الشيخ عطية الله الليبي', cssClass: 'author-gold', folder: 'عطية الله الليبي؛ رحمه الله' }
+};
+
+// Determine author from slug using the lookup
+function getAuthorFromSlug(slug: string): 'abu-yahya' | 'atiyatullah' {
+  const author = slugAuthor.get(slug);
+  if (author === 'abu-yahya' || author === 'atiyatullah') return author;
+  if (slug.startsWith('غير-مفرغ-')) return 'abu-yahya';
+  const num = parseInt(slug.split('-')[0]);
+  return num < 400 ? 'abu-yahya' : 'atiyatullah';
+}
+
+// Prepend author's media folder to a path
+function prefixMediaPath(path: string | undefined, author: 'abu-yahya' | 'atiyatullah'): string | undefined {
+  if (!path) return undefined;
+  return `${authorConfig[author].folder}/${path}`;
+}
+
+// Filter out "homepage" mappings
+const mediaItems = Object.entries(mediaMappings)
+  .filter(([key]) => key !== 'homepage')
+  .map(([slug, value]) => {
+    const item = value as { title: string; audio?: string; audios?: string[]; video?: string; untranscribed?: boolean };
+    const author = getAuthorFromSlug(slug);
+    const cfg = authorConfig[author];
+    
+    return {
+      slug,
+      title: item.title,
+      audio: prefixMediaPath(item.audio, author),
+      audios: item.audios ? item.audios.map(p => `${cfg.folder}/${p}`) : undefined,
+      video: prefixMediaPath(item.video, author),
+      untranscribed: item.untranscribed || false,
+      author,
+      authorName: cfg.name,
+      authorClass: cfg.cssClass,
+      link: item.untranscribed ? '' : `/book/${author}/${slug}`
+    };
+  });
+
+// Helper: check if item has any audio (single or array)
+function hasAudio(item: typeof mediaItems[0]): boolean {
+  return !!(item.audio || (item.audios && item.audios.length > 0));
+}
+
+// Separate counts per author (if both audio+video exist, count only under video)
+const abuAudioOnly = mediaItems.filter(item => item.author === 'abu-yahya' && hasAudio(item) && !item.video);
+const abuVideo = mediaItems.filter(item => item.author === 'abu-yahya' && item.video);
+const atiAudioOnly = mediaItems.filter(item => item.author === 'atiyatullah' && hasAudio(item) && !item.video);
+const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item.video);
+---
+
+<Layout title="المكتبة الصوتية والمرئية | تراث الشيخين الشهيدين" description="المكتبة الصوتية والمرئية للشيخين الشهيدين أبي يحيى الليبي وعطية الله الليبي - استمع وشاهد المحاضرات والدروس والمواد العلمية">
+  <Header />
+
+  <main class="media-library-layout">
+    <!-- Hero / Title Header -->
+    <section class="media-hero-section">
+      <div class="media-hero-overlay"></div>
+      <div class="hero-mountains"></div>
+      <div class="media-hero-container">
+        <div class="portal-badge">الأعمال الكاملة للشيخي عطية الله وأبي يحيى الليبيَّيْن</div>
+        <h1 class="media-hero-title">المكتبة الصوتية والمرئية</h1>
+        <p class="media-hero-subtitle">
+          تضم المواد الصوتية والمرئية الأصلية للشيخين الشهيدين أبي يحيى الليبي وعطية الله الليبي رحمهما الله، مع ربطها المباشر بالتفريغات المكتوبة.
+        </p>
+        
+        <!-- Summary Stats bubbles -->
+        <div class="media-stats-bar">
+          <div class="media-stat-card">
+            <span class="stat-icon">🔊</span>
+            <div class="stat-info">
+              <span class="stat-num">{abuAudioOnly.length + atiAudioOnly.length}</span>
+              <span class="stat-label">مادة صوتية فقط</span>
+            </div>
+          </div>
+          <div class="media-stat-card">
+            <span class="stat-icon">🎥</span>
+            <div class="stat-info">
+              <span class="stat-num">{abuVideo.length + atiVideo.length}</span>
+              <span class="stat-label">مادة مرئية (تشمل الصوتي)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-author breakdown -->
+        <div class="per-author-stats">
+          <div class="author-stat-row author-green-row">
+            <span class="author-stat-name">أبو يحيى:</span>
+            <span class="author-stat-counts">{abuAudioOnly.length} صوت / {abuVideo.length} مرئي</span>
+          </div>
+          <div class="author-stat-row author-gold-row">
+            <span class="author-stat-name">عطية الله:</span>
+            <span class="author-stat-counts">{atiAudioOnly.length} صوت / {atiVideo.length} مرئي</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters and Grid Container -->
+    <div class="media-content-container">
+      <!-- Filter Controls -->
+      <div class="filter-controls-wrapper">
+        <div class="filter-row">
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">الكل</button>
+            <button class="filter-btn" data-filter="abu-yahya">أبو يحيى</button>
+            <button class="filter-btn" data-filter="atiyatullah">عطية الله</button>
+          </div>
+          <div class="filter-group">
+            <button class="type-filter-btn active" data-type="all">كل الوسائط</button>
+            <button class="type-filter-btn" data-type="audio">صوت</button>
+            <button class="type-filter-btn" data-type="video">مرئي</button>
+          </div>
+        </div>
+        <div class="search-row">
+          <input type="text" class="media-search" id="media-search" placeholder="🔍 ابحث عن عنوان..." autocomplete="off">
+          <span class="search-count" id="search-count"></span>
+        </div>
+      </div>
+
+      <!-- Media Cards Grid -->
+      <div class="media-grid" id="media-grid">
+        {mediaItems.map((item) => (
+          <div 
+            class="media-card" 
+            data-author={item.author} 
+            data-has-audio={(item.audio || (item.audios && item.audios.length > 0)) ? "true" : "false"}
+            data-has-video={item.video ? "true" : "false"}
+            data-untranscribed={item.untranscribed ? "true" : "false"}
+          >
+            <!-- Card Header -->
+            <div class="media-card-header">
+              <span class={`author-badge ${item.authorClass}`}>{item.authorName}</span>
+              <div class="media-type-icons">
+                {(item.audio || (item.audios && item.audios.length > 0)) && <span class="media-type-badge audio-badge" title="ملف صوتي">🔊 صوت</span>}
+                {item.video && <span class="media-type-badge video-badge" title="ملف مرئي">🎥 مرئي</span>}
+                {item.untranscribed && <span class="media-type-badge untranscribed-badge" title="غير مفرغ">✏️ غير مفرغ</span>}
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="media-card-body">
+              <h3 class="media-card-title">{item.title}</h3>
+              
+              <!-- Local Players -->
+              <div class="media-players-section">
+                {item.audios && item.audios.length > 0 && (
+                  <div class="player-wrapper playlist-wrapper">
+                    <label class="playlist-label" for={`playlist-${item.slug}`}>
+                      <span>📋 قائمة تشغيل ({item.audios.length} مقطع)</span>
+                    </label>
+                    <select class="playlist-select" id={`playlist-${item.slug}`} data-playlist-select>
+                      {item.audios.map((audioFile, i) => (
+                        <option value={`/media/${audioFile}`}>المقطع {i + 1}</option>
+                      ))}
+                    </select>
+                    <audio class="local-audio-player plyr-audio" preload="metadata" data-playlist-player>
+                      <source src={`/media/${item.audios[0]}`} />
+                      متصفحك لا يدعم تشغيل هذا الملف الصوتي.
+                    </audio>
+                  </div>
+                )}
+                {item.audio && (
+                  <div class="player-wrapper">
+                    <span class="player-label">استماع للمادة الصوتية:</span>
+                    <audio class="local-audio-player plyr-audio" preload="metadata">
+                      <source src={`/media/${item.audio}`} />
+                      متصفحك لا يدعم تشغيل هذا الملف الصوتي.
+                    </audio>
+                  </div>
+                )}
+                {item.video && (
+                  <div class="player-wrapper">
+                    <span class="player-label">مشاهدة المادة المرئية:</span>
+                    <video class="local-video-player plyr-video" preload="metadata">
+                      <source src={`/media/${item.video}`} type="video/mp4" />
+                      متصفحك لا يدعم تشغيل هذا الفيديو.
+                    </video>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <!-- Card Footer / Actions -->
+            <div class="media-card-footer">
+              {item.untranscribed ? (
+                <div class="btn-untranscribed">
+                  <span>⏳ هذه المادة لم تُفرغ بعد</span>
+                </div>
+              ) : (
+              <a href={item.link} class="btn-read-transcription">
+                <span>الانتقال لقراءة التفريغ النصي</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <!-- Empty state hint -->
+      <div class="media-empty-state" id="media-empty-state" style="display: none;">
+        <span class="empty-icon">📂</span>
+        <h3>عذراً، لا توجد مواد مطابقة للخيارات المحددة</h3>
+        <p>يرجى تعديل خيارات التصفية للبحث مجدداً.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* Layout variables & style */
+  .media-library-layout {
+    min-height: 80vh;
+    background-color: var(--bg-color);
+    padding-bottom: 60px;
+    direction: rtl;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  .media-hero-section {
+    --mountain-far: rgba(201, 169, 78, 0.18);
+    --mountain-near: rgba(26, 106, 74, 0.22);
+    position: relative;
+    color: var(--text-color);
+    padding: 60px 20px;
+    text-align: center;
+    overflow: hidden;
+    overflow-x: hidden;
+    border-bottom: 4px solid var(--accent-color);
+    background:
+      repeating-conic-gradient(rgba(201, 169, 78, 0.035) 0% 25%, transparent 0% 50%) 0 0 / 60px 60px,
+      radial-gradient(ellipse 120% 35% at 20% 100%, rgba(26, 106, 74, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 30% at 50% 100%, rgba(201, 169, 78, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse 130% 40% at 80% 100%, rgba(26, 106, 74, 0.06) 0%, transparent 55%),
+      linear-gradient(135deg, #faf6ee 0%, #f0e4d2 45%, #ccdcd4 100%);
+  }
+
+  [data-theme="dark"] .media-hero-section {
+    --mountain-far: rgba(45, 106, 79, 0.28);
+    --mountain-near: rgba(27, 67, 50, 0.32);
+    background:
+      repeating-conic-gradient(rgba(201, 169, 78, 0.035) 0% 25%, transparent 0% 50%) 0 0 / 60px 60px,
+      radial-gradient(ellipse 120% 35% at 20% 100%, rgba(45, 106, 79, 0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 30% at 50% 100%, rgba(201, 169, 78, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 130% 40% at 80% 100%, rgba(45, 106, 79, 0.15) 0%, transparent 55%),
+      linear-gradient(135deg, #0b100d 0%, #121815 45%, #1a1a12 100%);
+  }
+
+  .media-hero-section .hero-mountains {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 45%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .media-hero-section .hero-mountains::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(170deg, transparent 25%, var(--mountain-far, rgba(201, 169, 78, 0.18)) 55%, transparent 100%);
+    clip-path: polygon(
+      0% 100%, 2% 55%, 5% 50%, 8% 58%, 12% 42%, 15% 48%, 18% 35%,
+      22% 45%, 25% 38%, 28% 48%, 32% 30%, 35% 40%, 38% 28%,
+      42% 38%, 45% 25%, 48% 35%, 52% 20%, 55% 30%, 58% 18%,
+      62% 28%, 65% 15%, 68% 25%, 72% 12%, 75% 22%, 78% 10%,
+      82% 20%, 85% 8%, 88% 18%, 92% 5%, 95% 15%, 98% 3%, 100% 12%, 100% 100%
+    );
+  }
+
+  .media-hero-section .hero-mountains::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 75%;
+    background: linear-gradient(170deg, transparent 40%, var(--mountain-near, rgba(26, 106, 74, 0.22)) 65%, transparent 100%);
+    clip-path: polygon(
+      0% 100%, 3% 65%, 7% 58%, 11% 68%, 15% 52%, 19% 60%, 23% 45%,
+      27% 55%, 31% 42%, 35% 52%, 39% 35%, 43% 48%, 47% 30%,
+      51% 42%, 55% 25%, 59% 38%, 63% 20%, 67% 32%, 71% 15%,
+      75% 28%, 79% 12%, 83% 22%, 87% 8%, 91% 18%, 95% 5%, 100% 15%, 100% 100%
+    );
+  }
+
+  .media-hero-overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background-image: radial-gradient(var(--accent-color) 0.5px, transparent 0.5px);
+    background-size: 16px 16px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .media-hero-container {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 3;
+  }
+
+  .portal-badge {
+    display: inline-block;
+    background-color: rgba(197, 168, 128, 0.15);
+    color: var(--accent-color);
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 1px solid rgba(197, 168, 128, 0.3);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    font-family: 'Thmanyah', 'Amiri', serif;
+  }
+
+  .media-hero-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-family: 'Thmanyah', 'Amiri', serif;
+  }
+
+  .media-hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 30px;
+    font-family: 'Thmanyah', 'Amiri', serif;
+  }
+
+  .media-stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .media-stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 180px;
+    text-align: right;
+    box-shadow: 0 4px 12px var(--shadow-color);
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+  }
+
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--primary-color);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .per-author-stats {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .author-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px var(--shadow-color);
+  }
+
+  .author-green-row {
+    border-right: 3px solid #065f46;
+  }
+
+  .author-gold-row {
+    border-right: 3px solid #92400e;
+  }
+
+  [data-theme="dark"] .author-green-row {
+    border-right-color: #a7f3d0;
+  }
+
+  [data-theme="dark"] .author-gold-row {
+    border-right-color: #fde68a;
+  }
+
+  .author-stat-name {
+    color: var(--text-color);
+  }
+
+  .author-stat-counts {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  /* Content and Filters */
+  .media-content-container {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding: 0 12px;
+  }
+
+  .filter-controls-wrapper {
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 16px;
+  }
+
+  .filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn, .type-filter-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: all var(--transition-fast);
+    min-height: 42px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .filter-btn:hover, .type-filter-btn:hover {
+    border-color: var(--primary-light);
+    color: var(--primary-light);
+  }
+
+  .filter-btn:active, .type-filter-btn:active {
+    transform: scale(0.96);
+  }
+
+  .filter-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #ffffff;
+  }
+
+  .type-filter-btn.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #ffffff;
+  }
+
+  .search-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .media-search {
+    flex: 1;
+    max-width: 360px;
+    padding: 10px 16px;
+    border-radius: 24px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color var(--transition-fast);
+    min-height: 42px;
+  }
+
+  .media-search:focus {
+    border-color: var(--primary-color);
+  }
+
+  .search-count {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* Grid Layout */
+  .media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  @media (max-width: 700px) {
+    .media-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .filter-controls-wrapper {
+      padding-bottom: 12px;
+    }
+    .filter-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .filter-group {
+      justify-content: center;
+    }
+    .filter-btn, .type-filter-btn {
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      flex: 1;
+      text-align: center;
+    }
+    .search-row {
+      max-width: 100%;
+    }
+    .media-search {
+      max-width: 100%;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .media-content-container {
+      padding: 0 8px;
+    }
+    .filter-btn, .type-filter-btn {
+      padding: 8px 10px;
+      font-size: 0.75rem;
+      min-height: 36px;
+    }
+  }
+
+  /* Media Card Styles */
+  .media-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .media-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px var(--shadow-color);
+  }
+
+  .media-card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-color);
+  }
+
+  .author-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .author-green {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+  
+  [data-theme="dark"] .author-green {
+    background-color: #064e3b;
+    color: #a7f3d0;
+  }
+
+  .author-gold {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  
+  [data-theme="dark"] .author-gold {
+    background-color: #78350f;
+    color: #fde68a;
+  }
+
+  .media-type-icons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .media-type-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+  }
+
+  .audio-badge {
+    background-color: #eff6ff;
+    color: #1e40af;
+  }
+
+  .video-badge {
+    background-color: #fdf2f8;
+    color: #9d174d;
+  }
+
+  .media-card-body {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .media-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.5;
+    margin-bottom: 16px;
+    min-height: 48px;
+    font-family: 'Thmanyah', 'Amiri', serif;
+  }
+
+  .media-players-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  .player-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .player-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .local-audio-player {
+    width: 100%;
+  }
+
+  .playlist-wrapper {
+    gap: 8px;
+  }
+
+  .playlist-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .playlist-select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 42px;
+  }
+
+  .local-video-wrapper {
+    border-radius: 6px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .local-video-player {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .media-card-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+  }
+
+  .btn-read-transcription {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 10px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    min-height: 44px;
+  }
+  
+  .media-card[data-author="atiyatullah"] .btn-read-transcription {
+    color: var(--accent-color);
+  }
+
+  .btn-read-transcription:hover {
+    border-color: var(--primary-light);
+    background-color: var(--primary-color);
+    color: #ffffff;
+    box-shadow: 0 4px 10px var(--shadow-color);
+  }
+
+  .media-card[data-author="atiyatullah"] .btn-read-transcription:hover {
+    border-color: var(--accent-color);
+    background-color: var(--accent-color);
+    color: #ffffff;
+  }
+
+  @media (max-width: 700px) {
+    .media-card-header {
+      padding: 10px 14px;
+    }
+    .media-card-body {
+      padding: 12px;
+    }
+    .media-card-title {
+      font-size: 0.92rem;
+      min-height: auto;
+      margin-bottom: 12px;
+    }
+    .media-card-footer {
+      padding: 10px 14px;
+    }
+    .playlist-select {
+      padding: 10px;
+      font-size: 0.82rem;
+    }
+    .btn-read-transcription {
+      font-size: 0.82rem;
+      padding: 10px;
+    }
+  }
+
+  /* Empty State */
+  .media-empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background-color: var(--card-bg);
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 15px;
+  }
+
+  .media-empty-state h3 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-color);
+    margin-bottom: 8px;
+  }
+
+  .media-empty-state p {
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .media-hero-section { padding: 32px 12px; }
+    .media-hero-section .hero-mountains { height: 30%; }
+    .media-stats-bar { gap: 12px; }
+    .media-stat-card {
+      padding: 10px 16px;
+      min-width: 140px;
+    }
+    .stat-icon { font-size: 1.5rem; }
+    .stat-num { font-size: 1.4rem; }
+    .per-author-stats { gap: 12px; }
+    .author-stat-row {
+      font-size: 0.82rem;
+      padding: 4px 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .media-hero-section { padding: 24px 8px; }
+    .media-hero-title { font-size: 1.5rem; }
+    .media-hero-subtitle { font-size: 0.9rem; }
+    .media-stats-bar { flex-direction: column; align-items: center; }
+    .media-stat-card { width: 100%; max-width: 240px; }
+    .portal-badge { font-size: 0.75rem; padding: 4px 12px; }
+  }
+
+  /* Plyr custom theme overrides */
+  .plyr--audio .plyr__controls {
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+  }
+  .plyr--video .plyr__controls {
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  }
+  .plyr__control--overlaid {
+    background: var(--primary-color);
+  }
+  .plyr--video .plyr__control--overlaid {
+    background: var(--primary-color);
+  }
+  .plyr__control--overlaid:hover {
+    background: var(--primary-light) !important;
+  }
+  .plyr--full-ui input[type=range] {
+    color: var(--primary-color);
+  }
+  .plyr--video .plyr__control.plyr__tab-focus,
+  .plyr--video .plyr__control:hover,
+  .plyr--video .plyr__control[aria-expanded=true] {
+    background: var(--primary-color);
+  }
+  .plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true]::before {
+    background: var(--primary-color);
+  }
+  :root {
+    --plyr-color-main: var(--primary-color);
+  }
+  [data-theme="dark"] {
+    --plyr-video-control-background-hover: var(--primary-color);
+    --plyr-audio-control-background-hover: var(--primary-color);
+  }
+</style>
+
+<script>
+  import Plyr from 'plyr';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const plyrInstances = new Map();
+
+    const plyrConfig = {
+      controls: [
+        'play-large', 'restart', 'rewind', 'play', 'fast-forward',
+        'progress', 'current-time', 'duration',
+        'mute', 'volume', 'captions', 'settings', 'download', 'pip', 'airplay', 'fullscreen'
+      ],
+      settings: ['speed', 'quality'],
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] },
+      seekTime: 10,
+      keyboard: { focused: true, global: true },
+      tooltips: { controls: true, seek: true },
+      invertTime: false,
+      toggleInvert: false,
+      resetOnEnd: true,
+      displayDuration: true
+    };
+
+    function initPlayers(container = document) {
+      container.querySelectorAll('audio.plyr-audio, video.plyr-video').forEach((el) => {
+        if (el.id && plyrInstances.has(el.id)) return;
+        const id = el.id || `plyr-${Math.random().toString(36).slice(2)}`;
+        el.id = id;
+        const player = new Plyr(el, plyrConfig);
+        plyrInstances.set(id, player);
+      });
+    }
+
+    initPlayers();
+
+    // Playlist select – switch audio source on change
+    document.querySelectorAll('[data-playlist-select]').forEach((select) => {
+      const wrapper = select.parentElement;
+      if (!wrapper) return;
+      const audioEl = wrapper.querySelector('[data-playlist-player]');
+      if (!audioEl) return;
+      const id = audioEl.id;
+      
+      select.addEventListener('change', () => {
+        const src = select.value;
+        if (id && plyrInstances.has(id)) {
+          const player = plyrInstances.get(id);
+          player.source = {
+            type: 'audio',
+            sources: [{ src, type: 'audio/mp3' }]
+          };
+          player.play();
+        } else {
+          audioEl.src = src;
+          audioEl.load();
+          audioEl.play();
+        }
+      });
+    });
+
+    // Filter controls
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const typeFilterBtns = document.querySelectorAll('.type-filter-btn');
+    const mediaCards = document.querySelectorAll('.media-card');
+    const emptyState = document.getElementById('media-empty-state');
+    const searchInput = document.getElementById('media-search');
+    const searchCount = document.getElementById('search-count');
+    
+    let currentAuthor = 'all';
+    let currentType = 'all';
+    let searchTerm = '';
+    let debounceTimer = null;
+    
+    function normalize(str) {
+      return str.replace(/[إأآا]/g, 'ا').replace(/[يى]/g, 'ي').replace(/[ؤئء]/g, 'ء').replace(/[ة]/g, 'ه').trim().toLowerCase();
+    }
+    
+    function applyFilters() {
+      let visibleCount = 0;
+      mediaCards.forEach((card) => {
+        const cardAuthor = card.getAttribute('data-author');
+        const hasAudio = card.getAttribute('data-has-audio') === 'true';
+        const hasVideo = card.getAttribute('data-has-video') === 'true';
+        const title = card.querySelector('.media-card-title')?.textContent || '';
+        
+        const authorMatch = (currentAuthor === 'all' || cardAuthor === currentAuthor);
+        let typeMatch = false;
+        if (currentType === 'all') typeMatch = true;
+        else if (currentType === 'audio' && hasAudio) typeMatch = true;
+        else if (currentType === 'video' && hasVideo) typeMatch = true;
+        
+        const searchMatch = !searchTerm || normalize(title).includes(searchTerm);
+        
+        const show = authorMatch && typeMatch && searchMatch;
+        card.style.display = show ? 'flex' : 'none';
+        if (show) visibleCount++;
+      });
+      if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+      if (searchCount) searchCount.textContent = visibleCount > 0 ? `${visibleCount} نتيجة` : '';
+    }
+    
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentAuthor = btn.getAttribute('data-filter') || 'all';
+        applyFilters();
+      });
+    });
+    
+    typeFilterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        typeFilterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentType = btn.getAttribute('data-type') || 'all';
+        applyFilters();
+      });
+    });
+    
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          searchTerm = normalize(searchInput.value);
+          applyFilters();
+        }, 150);
+      });
+    }
+  });
+</script>
