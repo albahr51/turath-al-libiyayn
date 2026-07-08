@@ -23,18 +23,17 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# media files (too large for GitHub, served via redirects)
-# Track ONLY PDFs, JPGs, PNGs from media (MP3/MP4 are too large)
-# Small media served directly from Cloudflare; large files via redirects
+# media files (only small files tracked in git; large files deleted post-build)
+# Cloudflare Pages 25MB limit per file → cleanup-media.mjs deletes >25MB from dist
 public/media/**
+!public/media/**/
 !public/media/**/*.pdf
 !public/media/**/*.jpg
 !public/media/**/*.png
 !public/media/**/*.json
 !public/media/**/*.md
-
-# but exclude the 1 PDF over 25MB
-public/media/مجموع الشيخ عطية الله الطبعة الثانية.pdf
+!public/media/**/*.mp3
+/public/media/عطية الله الليبي؛ رحمه الله/التجربة الجزائرية.mp3
 
 # wrangler
 .wrangler/
