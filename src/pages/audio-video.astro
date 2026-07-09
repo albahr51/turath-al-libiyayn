@@ -53,9 +53,28 @@ const mediaItems = Object.entries(mediaMappings)
       author,
       authorName: cfg.name,
       authorClass: cfg.cssClass,
-      link: item.untranscribed ? '' : `/book/${author}/${slug}`
+      link: item.untranscribed
+        ? (slug === 'غير-مفرغ-تقرير-مراسم-العزاء' ? `/book/abu-yahya/6-سيرة-الشيخ-أبي-يحيى-الليبي-حسن-محمد-قائد-رحمه-الله` : '')
+        : `/book/${author}/${slug}`
     };
   });
+
+// Sort: عطية الله first (authorOrder=0), then أبو يحيى (authorOrder=1).
+// Within each author, sort by title alphabetically.
+// The "تقرير عن مراسم العزاء" entry always goes last regardless.
+const REPORT_SLUG = 'غير-مفرغ-تقرير-مراسم-العزاء';
+mediaItems.sort((a, b) => {
+  // تقرير العزاء always last
+  if (a.slug === REPORT_SLUG) return 1;
+  if (b.slug === REPORT_SLUG) return -1;
+  // Sort by author priority
+  const authorOrder = { atiyatullah: 0, 'abu-yahya': 1 };
+  const aAuthor = authorOrder[a.author] ?? 2;
+  const bAuthor = authorOrder[b.author] ?? 2;
+  if (aAuthor !== bAuthor) return aAuthor - bAuthor;
+  // Within same author, sort by title
+  return a.title.localeCompare(b.title, 'ar');
+});
 
 // Helper: check if item has any audio (single or array)
 function hasAudio(item: typeof mediaItems[0]): boolean {
@@ -203,7 +222,15 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
 
             <!-- Card Footer / Actions -->
             <div class="media-card-footer">
-              {item.untranscribed ? (
+              {item.slug === 'غير-مفرغ-تقرير-مراسم-العزاء' ? (
+                <a href={item.link} class="btn-read-transcription">
+                  <span>اقرأ سيرة الشيخ</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                </a>
+              ) : item.untranscribed ? (
                 <div class="btn-untranscribed">
                   <span>⏳ هذه المادة لم تُفرغ بعد</span>
                 </div>
