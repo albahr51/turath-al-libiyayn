@@ -59,22 +59,110 @@ const mediaItems = Object.entries(mediaMappings)
     };
   });
 
-// Sort: عطية الله first (authorOrder=0), then أبو يحيى (authorOrder=1).
-// Within each author, sort by title alphabetically.
-// The "تقرير عن مراسم العزاء" entry always goes last regardless.
+// Items that belong to the report (goes last)
 const REPORT_SLUG = 'غير-مفرغ-تقرير-مراسم-العزاء';
-mediaItems.sort((a, b) => {
-  // تقرير العزاء always last
-  if (a.slug === REPORT_SLUG) return 1;
-  if (b.slug === REPORT_SLUG) return -1;
-  // Sort by author priority
-  const authorOrder = { atiyatullah: 0, 'abu-yahya': 1 };
-  const aAuthor = authorOrder[a.author] ?? 2;
-  const bAuthor = authorOrder[b.author] ?? 2;
-  if (aAuthor !== bAuthor) return aAuthor - bAuthor;
-  // Within same author, sort by title
-  return a.title.localeCompare(b.title, 'ar');
-});
+
+// Define series groups: regex patterns -> group label
+const SERIES_PATTERNS: { regex: RegExp; label: string } [] = [
+  { regex: /^سلسلة الثقافة/, label: 'سلسلة الثقافة الإسلامية والوعي' },
+  { regex: /^تأملات في سورة الحجرات/, label: 'تأملات في سورة الحجرات' },
+  { regex: /مختارات من فقه الجهاد/, label: 'مختارات من فقه الجهاد' },
+  { regex: /شرح كتاب السياسة الشرعية|الدُّرَرُ الحَسَنِيَّةُ/, label: 'الدُّرَرُ الحَسَنِيَّةُ؛ شرح كتاب السياسة الشرعية' },
+  { regex: /^شرح الآجرومية/, label: 'شرح الآجرومية' },
+  { regex: /تفسير سورة الأنفال/, label: 'تفسير سورة الأنفال' },
+  { regex: /جلسات مع الشيخ في دورة الكوادر/, label: 'جلسات في دورة الكوادر' },
+  { regex: /قناديل من نور|مسك الشهداء|عليكم بالخنادق|دعوة انتقام/, label: 'قناديل من نور' },
+  { regex: /الهداية ونعمة الجهاد/, label: 'قناديل من نور' },
+  { regex: /أهل التجارة مع الله/, label: 'قناديل من نور' },
+];
+
+function detectSeries(title: string): string | null {
+  for (const p of SERIES_PATTERNS) {
+    if (p.regex.test(title)) return p.label;
+  }
+  return null;
+}
+
+// Helper to extract a numeric sorting key from a title (e.g., "الدرس الأول" -> 1, "قناديل من نور 7" -> 7)
+function numericSortKey(title: string): number {
+  // Try "الدرس (الأول|الثاني|...)" or trailing digits
+  const arabicNumMap: Record<string, number> = {
+    الأول: 1, الثاني: 2, الثالث: 3, الرابع: 4, الخامس: 5,
+    السادس: 6, السابع: 7, الثامن: 8, التاسع: 9, العاشر: 10,
+    الحادي_عشر: 11, الثاني_عشر: 12,
+  };
+  const arabicMatch = title.match(/الدرس\s+(الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع|الثامن|التاسع|العاشر|الحادي عشر|الثاني عشر)/);
+  if (arabicMatch) return arabicNumMap[arabicMatch[1].replace(/ /g, '_')] ?? 99;
+  // "المجلس 1", "قناديل من نور 7", trailing " 1" or " - 1"
+  const digitMatch = title.match(/(?:المجلس|قناديل من نور|الدرس|مقدمة)\s*(\d+)/);
+  if (digitMatch) return parseInt(digitMatch[1]);
+  // Trailing number like " - 1" at end
+  const trail = title.match(/[-\s](\d+)$/);
+  if (trail) return parseInt(trail[1]);
+  // "مقدمة" at start -> 0 (comes before 1)
+  if (/^مقدمة/.test(title)) return 0;
+  return 99;
+}
+
+// Sort: عطية الله first (authorOrder=0), then أبو يحيى (authorOrder=1).
+// Within each author, group by series, then sort series by their numeric order, then standalone items by title.
+const authorOrder = { atiyatullah: 0, 'abu-yahya': 1 };
+
+// Build groups: array of { label: string, items: [] }
+function buildGroups(items: typeof mediaItems) {
+  // Separate series items and standalone items
+  const seriesMap = new Map<string, typeof mediaItems>();
+  const standalone: typeof mediaItems = [];
+  const report: typeof mediaItems = [];
+
+  for (const item of items) {
+    if (item.slug === REPORT_SLUG) { report.push(item); continue; }
+    const s = detectSeries(item.title);
+    if (s) {
+      if (!seriesMap.has(s)) seriesMap.set(s, []);
+      seriesMap.get(s)!.push(item);
+    } else {
+      standalone.push(item);
+    }
+  }
+
+  // Sort items within each series by numericSortKey
+  for (const [, group] of seriesMap) {
+    group.sort((a, b) => numericSortKey(a.title) - numericSortKey(b.title));
+  }
+
+  // Sort series by their first item's sort key (or alphabetically)
+  const seriesEntries = [...seriesMap.entries()].sort(([, a], [, b]) => {
+    const ka = numericSortKey(a[0].title);
+    const kb = numericSortKey(b[0].title);
+    return ka - kb || a[0].title.localeCompare(b[0].title, 'ar');
+  });
+
+  // Sort standalone alphabetically
+  standalone.sort((a, b) => a.title.localeCompare(b.title, 'ar'));
+
+  // Build final flat list: series groups first (with header markers), then standalone, then report
+  const result: Array<{ type: string; label?: string; item?: typeof mediaItems[0] }> = [];
+  for (const [label, series] of seriesEntries) {
+    result.push({ type: 'series-header', label });
+    for (const item of series) {
+      result.push({ type: 'item', item });
+    }
+  }
+  for (const item of standalone) {
+    result.push({ type: 'item', item });
+  }
+  for (const item of report) {
+    result.push({ type: 'item', item });
+  }
+  return result;
+}
+
+// We'll arrange by author first, then within author we build groups
+const allGrouped = [
+  ...buildGroups(mediaItems.filter(i => i.author === 'atiyatullah')),
+  ...buildGroups(mediaItems.filter(i => i.author === 'abu-yahya')),
+];
 
 // Helper: check if item has any audio (single or array)
 function hasAudio(item: typeof mediaItems[0]): boolean {
@@ -82,6 +170,7 @@ function hasAudio(item: typeof mediaItems[0]): boolean {
 }
 
 // Separate counts per author (if both audio+video exist, count only under video)
+// For stats, use original mediaItems (flat)
 const abuAudioOnly = mediaItems.filter(item => item.author === 'abu-yahya' && hasAudio(item) && !item.video);
 const abuVideo = mediaItems.filter(item => item.author === 'abu-yahya' && item.video);
 const atiAudioOnly = mediaItems.filter(item => item.author === 'atiyatullah' && hasAudio(item) && !item.video);
@@ -159,60 +248,66 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
 
       <!-- Media Cards Grid -->
       <div class="media-grid" id="media-grid">
-        {mediaItems.map((item) => (
+        {allGrouped.map((entry) => (
+          entry.type === 'series-header' ? (
+            <div class="series-header" data-series-label={entry.label}>
+              <span class="series-header-icon">📚</span>
+              <span class="series-header-title">{entry.label}</span>
+            </div>
+          ) : (
           <div 
             class="media-card" 
-            data-author={item.author} 
-            data-has-audio={(item.audio || (item.audios && item.audios.length > 0)) ? "true" : "false"}
-            data-has-video={item.video ? "true" : "false"}
-            data-untranscribed={item.untranscribed ? "true" : "false"}
+            data-author={entry.item.author} 
+            data-has-audio={(entry.item.audio || (entry.item.audios && entry.item.audios.length > 0)) ? "true" : "false"}
+            data-has-video={entry.item.video ? "true" : "false"}
+            data-untranscribed={entry.item.untranscribed ? "true" : "false"}
           >
             <!-- Card Header -->
             <div class="media-card-header">
-              <span class={`author-badge ${item.authorClass}`}>{item.authorName}</span>
+              <span class={`author-badge ${entry.item.authorClass}`}>{entry.item.authorName}</span>
               <div class="media-type-icons">
-                {(item.audio || (item.audios && item.audios.length > 0)) && <span class="media-type-badge audio-badge" title="ملف صوتي">🔊 صوت</span>}
-                {item.video && <span class="media-type-badge video-badge" title="ملف مرئي">🎥 مرئي</span>}
-                {item.untranscribed && <span class="media-type-badge untranscribed-badge" title="غير مفرغ">✏️ غير مفرغ</span>}
+                {(entry.item.audio || (entry.item.audios && entry.item.audios.length > 0)) && <span class="media-type-badge audio-badge" title="ملف صوتي">🔊 صوت</span>}
+                {entry.item.video && <span class="media-type-badge video-badge" title="ملف مرئي">🎥 مرئي</span>}
+                {entry.item.untranscribed && <span class="media-type-badge untranscribed-badge" title="غير مفرغ">✏️ غير مفرغ</span>}
               </div>
             </div>
 
             <!-- Card Body -->
             <div class="media-card-body">
-              <h3 class="media-card-title">{item.title}</h3>
+              <h3 class="media-card-title">{entry.item.title}</h3>
               
               <!-- Local Players -->
               <div class="media-players-section">
-                {item.audios && item.audios.length > 0 && (
+                {entry.item.audios && entry.item.audios.length > 0 && (
                   <div class="player-wrapper playlist-wrapper">
-                    <label class="playlist-label" for={`playlist-${item.slug}`}>
-                      <span>📋 قائمة تشغيل ({item.audios.length} مقطع)</span>
+                    <label class="playlist-label" for={`playlist-${entry.item.slug}`}>
+                      <span>📋 قائمة تشغيل ({entry.item.audios.length} مقطع)</span>
                     </label>
-                    <select class="playlist-select" id={`playlist-${item.slug}`} data-playlist-select>
-                      {item.audios.map((audioFile, i) => (
+                    <select class="playlist-select" id={`playlist-${entry.item.slug}`} data-playlist-select>
+                      {entry.item.audios.map((audioFile, i) => (
                         <option value={`/media/${audioFile}`}>المقطع {i + 1}</option>
                       ))}
                     </select>
                     <audio class="local-audio-player plyr-audio" preload="metadata" data-playlist-player>
-                      <source src={`/media/${item.audios[0]}`} />
+                      <source src={`/media/${entry.item.audios[0]}`} />
                       متصفحك لا يدعم تشغيل هذا الملف الصوتي.
                     </audio>
                   </div>
                 )}
-                {item.audio && (
+                {entry.item.audio && (
                   <div class="player-wrapper">
                     <span class="player-label">استماع للمادة الصوتية:</span>
                     <audio class="local-audio-player plyr-audio" preload="metadata">
-                      <source src={`/media/${item.audio}`} />
+                      <source src={`/media/${entry.item.audio}`} />
                       متصفحك لا يدعم تشغيل هذا الملف الصوتي.
                     </audio>
                   </div>
                 )}
-                {item.video && (
+                {entry.item.video && (
                   <div class="player-wrapper">
                     <span class="player-label">مشاهدة المادة المرئية:</span>
                     <video class="local-video-player plyr-video" preload="metadata">
-                      <source src={`/media/${item.video}`} type="video/mp4" />
+                      <source src={`/media/${entry.item.video}`} type="video/mp4" />
                       متصفحك لا يدعم تشغيل هذا الفيديو.
                     </video>
                   </div>
@@ -222,20 +317,20 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
 
             <!-- Card Footer / Actions -->
             <div class="media-card-footer">
-              {item.slug === 'غير-مفرغ-تقرير-مراسم-العزاء' ? (
-                <a href={item.link} class="btn-read-transcription">
+              {entry.item.slug === 'غير-مفرغ-تقرير-مراسم-العزاء' ? (
+                <a href={entry.item.link} class="btn-read-transcription">
                   <span>اقرأ سيرة الشيخ</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="19" y1="12" x2="5" y2="12"></line>
                     <polyline points="12 19 5 12 12 5"></polyline>
                   </svg>
                 </a>
-              ) : item.untranscribed ? (
+              ) : entry.item.untranscribed ? (
                 <div class="btn-untranscribed">
                   <span>⏳ هذه المادة لم تُفرغ بعد</span>
                 </div>
               ) : (
-              <a href={item.link} class="btn-read-transcription">
+              <a href={entry.item.link} class="btn-read-transcription">
                 <span>الانتقال لقراءة التفريغ النصي</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -245,6 +340,7 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
               )}
             </div>
           </div>
+          )
         ))}
       </div>
       

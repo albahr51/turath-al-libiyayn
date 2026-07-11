@@ -32,8 +32,6 @@ public/media/**
 !public/media/**/*.png
 !public/media/**/*.json
 !public/media/**/*.md
-!public/media/**/*.mp3
-/public/media/عطية الله الليبي؛ رحمه الله/التجربة الجزائرية.mp3
 
 # wrangler
 .wrangler/
