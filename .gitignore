@@ -19,6 +19,8 @@ pnpm-debug.log*
 
 # macOS-specific files
 .DS_Store
+desktop.ini
+.megaignore
 
 # jetbrains setting folder
 .idea/
