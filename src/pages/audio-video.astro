@@ -117,6 +117,8 @@ function buildGroups(items: typeof mediaItems) {
 
   for (const item of items) {
     if (item.slug === REPORT_SLUG) { report.push(item); continue; }
+    // Skip items with no audio AND no video
+    if (!hasAudio(item) && !item.video) continue;
     const s = detectSeries(item.title);
     if (s) {
       if (!seriesMap.has(s)) seriesMap.set(s, []);
@@ -1124,9 +1126,23 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
         
         const searchMatch = !searchTerm || normalize(title).includes(searchTerm);
         
-        const show = authorMatch && typeMatch && searchMatch;
-        card.style.display = show ? 'flex' : 'none';
-        if (show) visibleCount++;
+        card.style.display = (authorMatch && typeMatch && searchMatch) ? 'flex' : 'none';
+        if (authorMatch && typeMatch && searchMatch) visibleCount++;
+      });
+      // Hide series headers that have no visible cards between them and the next header
+      const headers = document.querySelectorAll('.series-header');
+      headers.forEach((header, idx) => {
+        const nextHeader = headers[idx + 1];
+        let visibleSibling = false;
+        let el = header.nextElementSibling;
+        while (el && el !== nextHeader) {
+          if (el.classList.contains('media-card') && el.style.display !== 'none') {
+            visibleSibling = true;
+            break;
+          }
+          el = el.nextElementSibling;
+        }
+        header.style.display = visibleSibling ? '' : 'none';
       });
       if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
       if (searchCount) searchCount.textContent = visibleCount > 0 ? `${visibleCount} نتيجة` : '';
