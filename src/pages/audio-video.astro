@@ -108,11 +108,29 @@ function buildGroups(items: typeof mediaItems) {
   return result;
 }
 
-// We'll arrange by author first, then within author we build groups
-const allGrouped = [
-  ...buildGroups(mediaItems.filter(i => i.author === 'atiyatullah')),
-  ...buildGroups(mediaItems.filter(i => i.author === 'abu-yahya')),
-];
+// Separate audio-only and video items per author, then combine
+const atiVideo = buildGroups(mediaItems.filter(i => i.author === 'atiyatullah' && i.video));
+const atiAudio = buildGroups(mediaItems.filter(i => i.author === 'atiyatullah' && hasAudio(i) && !i.video));
+const abuVideo = buildGroups(mediaItems.filter(i => i.author === 'abu-yahya' && i.video));
+const abuAudio = buildGroups(mediaItems.filter(i => i.author === 'abu-yahya' && hasAudio(i) && !i.video));
+
+const allGrouped: Array<{ type: string; label?: string; item?: typeof mediaItems[0] }> = [];
+if (atiVideo.length) {
+  allGrouped.push({ type: 'section-header', label: 'المواد المرئية - الشيخ عطية الله' });
+  allGrouped.push(...atiVideo);
+}
+if (atiAudio.length) {
+  allGrouped.push({ type: 'section-header', label: 'المواد الصوتية فقط - الشيخ عطية الله' });
+  allGrouped.push(...atiAudio);
+}
+if (abuVideo.length) {
+  allGrouped.push({ type: 'section-header', label: 'المواد المرئية - الشيخ أبو يحيى' });
+  allGrouped.push(...abuVideo);
+}
+if (abuAudio.length) {
+  allGrouped.push({ type: 'section-header', label: 'المواد الصوتية فقط - الشيخ أبو يحيى' });
+  allGrouped.push(...abuAudio);
+}
 
 // Helper: check if item has any audio (single or array)
 function hasAudio(item: typeof mediaItems[0]): boolean {
@@ -121,10 +139,10 @@ function hasAudio(item: typeof mediaItems[0]): boolean {
 
 // Separate counts per author (if both audio+video exist, count only under video)
 // For stats, use original mediaItems (flat)
-const abuAudioOnly = mediaItems.filter(item => item.author === 'abu-yahya' && hasAudio(item) && !item.video);
-const abuVideo = mediaItems.filter(item => item.author === 'abu-yahya' && item.video);
-const atiAudioOnly = mediaItems.filter(item => item.author === 'atiyatullah' && hasAudio(item) && !item.video);
-const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item.video);
+const abuAudioOnlyCount = mediaItems.filter(item => item.author === 'abu-yahya' && hasAudio(item) && !item.video).length;
+const abuVideoCount = mediaItems.filter(item => item.author === 'abu-yahya' && item.video).length;
+const atiAudioOnlyCount = mediaItems.filter(item => item.author === 'atiyatullah' && hasAudio(item) && !item.video).length;
+const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' && item.video).length;
 ---
 
 <Layout title="المكتبة الصوتية والمرئية | تراث الشيخين الشهيدين" description="المكتبة الصوتية والمرئية للشيخين الشهيدين أبي يحيى الليبي وعطية الله الليبي - استمع وشاهد المحاضرات والدروس والمواد العلمية">
@@ -147,14 +165,14 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
           <div class="media-stat-card">
             <span class="stat-icon">🔊</span>
             <div class="stat-info">
-              <span class="stat-num">{abuAudioOnly.length + atiAudioOnly.length}</span>
+              <span class="stat-num">{abuAudioOnlyCount + atiAudioOnlyCount}</span>
               <span class="stat-label">مادة صوتية فقط</span>
             </div>
           </div>
           <div class="media-stat-card">
             <span class="stat-icon">🎥</span>
             <div class="stat-info">
-              <span class="stat-num">{abuVideo.length + atiVideo.length}</span>
+              <span class="stat-num">{abuVideoCount + atiVideoCount}</span>
               <span class="stat-label">مادة مرئية (تشمل الصوتي)</span>
             </div>
           </div>
@@ -164,11 +182,11 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
         <div class="per-author-stats">
           <div class="author-stat-row author-green-row">
             <span class="author-stat-name">أبو يحيى:</span>
-            <span class="author-stat-counts">{abuAudioOnly.length} صوت / {abuVideo.length} مرئي</span>
+            <span class="author-stat-counts">{abuAudioOnlyCount} صوت / {abuVideoCount} مرئي</span>
           </div>
           <div class="author-stat-row author-gold-row">
             <span class="author-stat-name">عطية الله:</span>
-            <span class="author-stat-counts">{atiAudioOnly.length} صوت / {atiVideo.length} مرئي</span>
+            <span class="author-stat-counts">{atiAudioOnlyCount} صوت / {atiVideoCount} مرئي</span>
           </div>
         </div>
       </div>
@@ -198,8 +216,14 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
 
       <!-- Media Cards Grid -->
       <div class="media-grid" id="media-grid">
-        {allGrouped.map((entry) => (
-          <div 
+        {allGrouped.map((entry) => {
+          if (entry.type === 'section-header') {
+            return <div class="media-section-header" data-section-label={entry.label}>
+              <span class="section-header-icon">{entry.label?.includes('مرئي') ? '🎥' : '🔊'}</span>
+              <span class="section-header-title">{entry.label}</span>
+            </div>;
+          }
+          return <div 
             class="media-card" 
             data-author={entry.item.author} 
             data-has-audio={(entry.item.audio || (entry.item.audios && entry.item.audios.length > 0)) ? "true" : "false"}
@@ -284,7 +308,7 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
               )}
             </div>
           </div>
-        ))}
+        })}
       </div>
       
       <!-- Empty state hint -->
@@ -664,6 +688,36 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
       font-size: 0.75rem;
       min-height: 36px;
     }
+  }
+
+  /* Section Headers */
+  .media-section-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px var(--shadow-color);
+  }
+
+  .media-section-header:first-of-type {
+    margin-top: 0;
+  }
+
+  .section-header-icon {
+    font-size: 1.6rem;
+  }
+
+  .section-header-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    font-family: 'Thmanyah', 'Amiri', serif;
   }
 
   /* Media Card Styles */
@@ -1070,6 +1124,23 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
         card.style.display = (authorMatch && typeMatch && searchMatch) ? 'flex' : 'none';
         if (authorMatch && typeMatch && searchMatch) visibleCount++;
       });
+
+      // Show/hide section headers based on visible cards beneath them
+      const headers = document.querySelectorAll('.media-section-header');
+      headers.forEach((header, idx) => {
+        const nextHeader = headers[idx + 1];
+        let hasVisible = false;
+        let el = header.nextElementSibling;
+        while (el && el !== nextHeader) {
+          if (el.classList.contains('media-card') && el.style.display !== 'none') {
+            hasVisible = true;
+            break;
+          }
+          el = el.nextElementSibling;
+        }
+        header.style.display = hasVisible ? '' : 'none';
+      });
+
       if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
       if (searchCount) searchCount.textContent = visibleCount > 0 ? `${visibleCount} نتيجة` : '';
     }
