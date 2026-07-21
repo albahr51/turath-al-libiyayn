@@ -16,8 +16,8 @@ for (const entry of allEntries) {
 
 // Author display configuration
 const authorConfig = {
-  'abu-yahya': { name: 'الشيخ أبو يحيى الليبي', cssClass: 'author-green', folder: 'أبو يحيى الليبي؛ رحمه الله' },
-  'atiyatullah': { name: 'الشيخ عطية الله الليبي', cssClass: 'author-gold', folder: 'عطية الله الليبي؛ رحمه الله' }
+  'abu-yahya': { name: 'الشيخ أبو يحيى الليبي', cssClass: 'author-green' },
+  'atiyatullah': { name: 'الشيخ عطية الله الليبي', cssClass: 'author-gold' }
 };
 
 // Determine author from slug using the lookup
@@ -29,10 +29,9 @@ function getAuthorFromSlug(slug: string): 'abu-yahya' | 'atiyatullah' {
   return num < 400 ? 'abu-yahya' : 'atiyatullah';
 }
 
-// Prepend author's media folder to a path
-function prefixMediaPath(path: string | undefined, author: 'abu-yahya' | 'atiyatullah'): string | undefined {
-  if (!path) return undefined;
-  return `${authorConfig[author].folder}/${path}`;
+// Return path as-is (media files stored directly in public/media/ or subdirectories)
+function prefixMediaPath(path: string | undefined, _author: 'abu-yahya' | 'atiyatullah'): string | undefined {
+  return path;
 }
 
 // Filter out "homepage" mappings
@@ -47,7 +46,7 @@ const mediaItems = Object.entries(mediaMappings)
       slug,
       title: item.title,
       audio: prefixMediaPath(item.audio, author),
-      audios: item.audios ? item.audios.map(p => `${cfg.folder}/${p}`) : undefined,
+      audios: item.audios,
       video: prefixMediaPath(item.video, author),
       untranscribed: item.untranscribed || false,
       author,
@@ -62,26 +61,7 @@ const mediaItems = Object.entries(mediaMappings)
 // Items that belong to the report (goes last)
 const REPORT_SLUG = 'غير-مفرغ-تقرير-مراسم-العزاء';
 
-// Define series groups: regex patterns -> group label
-const SERIES_PATTERNS: { regex: RegExp; label: string } [] = [
-  { regex: /^سلسلة الثقافة/, label: 'سلسلة الثقافة الإسلامية والوعي' },
-  { regex: /^تأملات في سورة الحجرات/, label: 'تأملات في سورة الحجرات' },
-  { regex: /مختارات من فقه الجهاد/, label: 'مختارات من فقه الجهاد' },
-  { regex: /شرح كتاب السياسة الشرعية|الدُّرَرُ الحَسَنِيَّةُ/, label: 'الدُّرَرُ الحَسَنِيَّةُ؛ شرح كتاب السياسة الشرعية' },
-  { regex: /^شرح الآجرومية/, label: 'شرح الآجرومية' },
-  { regex: /تفسير سورة الأنفال/, label: 'تفسير سورة الأنفال' },
-  { regex: /جلسات مع الشيخ في دورة الكوادر/, label: 'جلسات في دورة الكوادر' },
-  { regex: /قناديل من نور|مسك الشهداء|عليكم بالخنادق|دعوة انتقام/, label: 'قناديل من نور' },
-  { regex: /الهداية ونعمة الجهاد/, label: 'قناديل من نور' },
-  { regex: /أهل التجارة مع الله/, label: 'قناديل من نور' },
-];
 
-function detectSeries(title: string): string | null {
-  for (const p of SERIES_PATTERNS) {
-    if (p.regex.test(title)) return p.label;
-  }
-  return null;
-}
 
 // Helper to extract a numeric sorting key from a title (e.g., "الدرس الأول" -> 1, "قناديل من نور 7" -> 7)
 function numericSortKey(title: string): number {
@@ -108,52 +88,20 @@ function numericSortKey(title: string): number {
 // Within each author, group by series, then sort series by their numeric order, then standalone items by title.
 const authorOrder = { atiyatullah: 0, 'abu-yahya': 1 };
 
-// Build groups: array of { label: string, items: [] }
+// Build groups: flat list of items sorted alphabetically by title
 function buildGroups(items: typeof mediaItems) {
-  // Separate series items and standalone items
-  const seriesMap = new Map<string, typeof mediaItems>();
-  const standalone: typeof mediaItems = [];
+  const result: Array<{ type: string; item?: typeof mediaItems[0] }> = [];
   const report: typeof mediaItems = [];
 
   for (const item of items) {
     if (item.slug === REPORT_SLUG) { report.push(item); continue; }
-    // Skip items with no audio AND no video
     if (!hasAudio(item) && !item.video) continue;
-    const s = detectSeries(item.title);
-    if (s) {
-      if (!seriesMap.has(s)) seriesMap.set(s, []);
-      seriesMap.get(s)!.push(item);
-    } else {
-      standalone.push(item);
-    }
-  }
-
-  // Sort items within each series by numericSortKey
-  for (const [, group] of seriesMap) {
-    group.sort((a, b) => numericSortKey(a.title) - numericSortKey(b.title));
-  }
-
-  // Sort series by their first item's sort key (or alphabetically)
-  const seriesEntries = [...seriesMap.entries()].sort(([, a], [, b]) => {
-    const ka = numericSortKey(a[0].title);
-    const kb = numericSortKey(b[0].title);
-    return ka - kb || a[0].title.localeCompare(b[0].title, 'ar');
-  });
-
-  // Sort standalone alphabetically
-  standalone.sort((a, b) => a.title.localeCompare(b.title, 'ar'));
-
-  // Build final flat list: series groups first (with header markers), then standalone, then report
-  const result: Array<{ type: string; label?: string; item?: typeof mediaItems[0] }> = [];
-  for (const [label, series] of seriesEntries) {
-    result.push({ type: 'series-header', label });
-    for (const item of series) {
-      result.push({ type: 'item', item });
-    }
-  }
-  for (const item of standalone) {
     result.push({ type: 'item', item });
   }
+
+  // Sort alphabetically by title
+  result.sort((a, b) => a.item!.title.localeCompare(b.item!.title, 'ar'));
+
   for (const item of report) {
     result.push({ type: 'item', item });
   }
@@ -251,12 +199,6 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
       <!-- Media Cards Grid -->
       <div class="media-grid" id="media-grid">
         {allGrouped.map((entry) => (
-          entry.type === 'series-header' ? (
-            <div class="series-header" data-series-label={entry.label}>
-              <span class="series-header-icon">📚</span>
-              <span class="series-header-title">{entry.label}</span>
-            </div>
-          ) : (
           <div 
             class="media-card" 
             data-author={entry.item.author} 
@@ -342,7 +284,6 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
               )}
             </div>
           </div>
-          )
         ))}
       </div>
       
@@ -1128,21 +1069,6 @@ const atiVideo = mediaItems.filter(item => item.author === 'atiyatullah' && item
         
         card.style.display = (authorMatch && typeMatch && searchMatch) ? 'flex' : 'none';
         if (authorMatch && typeMatch && searchMatch) visibleCount++;
-      });
-      // Hide series headers that have no visible cards between them and the next header
-      const headers = document.querySelectorAll('.series-header');
-      headers.forEach((header, idx) => {
-        const nextHeader = headers[idx + 1];
-        let visibleSibling = false;
-        let el = header.nextElementSibling;
-        while (el && el !== nextHeader) {
-          if (el.classList.contains('media-card') && el.style.display !== 'none') {
-            visibleSibling = true;
-            break;
-          }
-          el = el.nextElementSibling;
-        }
-        header.style.display = visibleSibling ? '' : 'none';
       });
       if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
       if (searchCount) searchCount.textContent = visibleCount > 0 ? `${visibleCount} نتيجة` : '';
