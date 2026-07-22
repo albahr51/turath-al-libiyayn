@@ -12,6 +12,7 @@ interface Props {
   themeClass?: string;
   brandTitle?: string;
   brandSubtitle?: string;
+  shortLink?: string;
 }
 
 const { 
@@ -21,7 +22,8 @@ const {
   currentSlug = "", 
   themeClass = "",
   brandTitle,
-  brandSubtitle
+  brandSubtitle,
+  shortLink
 } = Astro.props;
 ---
 
@@ -74,8 +76,18 @@ const {
   </div>
 </Layout>
 
-<script define:vars={{ author }}>
+<script define:vars={{ author, shortLink }}>
   window.activeBookSlug = author;
+  if (shortLink) {
+    window.shortLink = shortLink;
+    document.addEventListener('copy', function (e) {
+      var sel = window.getSelection().toString().trim();
+      if (!sel) return;
+      var newText = sel + '\n\n\u2014\n\ud83d\udcda ' + shortLink;
+      e.clipboardData.setData('text/plain', newText);
+      e.preventDefault();
+    });
+  }
 </script>
 
 <script>

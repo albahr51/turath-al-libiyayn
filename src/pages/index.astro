@@ -424,8 +424,9 @@ const homepageMedia = mediaMappings.homepage;
       const authorLabel = qq.author === 'abu-yahya' ? 'الشيخ أبو يحيى الليبي' : 'الشيخ عطية الله الليبي';
       quoteSource.innerHTML = `<a href="${qq.url}" class="source-link">${authorLabel} - ${qq.title}</a>`;
       quoteCounter.textContent = `${currentIndex + 1} / ${quotes.length}`;
+      const shortLink = `https://turath-al-libiyayn.pages.dev${qq.url}`;
       const attribution = `${qq.author === 'abu-yahya' ? 'مجموع الشيخ أبي يحيى الليبي' : 'مجموع الشيخ عطية الله الليبي'} (ص ${qq.page}) - ${qq.title}`;
-      quoteBlock.setAttribute('data-copy-text', `${qq.text}\n\n${attribution}`);
+      quoteBlock.setAttribute('data-copy-text', `${qq.text}\n\n${attribution}\n\ud83d\udcda ${shortLink}`);
     }
 
     function nextQuote() { renderQuote(currentIndex + 1); }

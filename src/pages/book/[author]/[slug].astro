@@ -71,12 +71,6 @@ const authorTitles = {
 const printPdfSlug = findPdfSlug(entry.data.order, entry.data.author, entry.data.slug);
 const printLink = `/media/extracted/${entry.data.author}/${printPdfSlug}.pdf`;
 
-// Author media folders
-const authorFolders = {
-  'abu-yahya': 'أبو يحيى الليبي؛ رحمه الله',
-  'atiyatullah': 'عطية الله الليبي؛ رحمه الله'
-};
-
 // Fetch media info from mapping json
 const rawMedia = mediaMappings[entry.data.slug as keyof typeof mediaMappings] as {
   title: string;
@@ -85,12 +79,11 @@ const rawMedia = mediaMappings[entry.data.slug as keyof typeof mediaMappings] as
   video?: string;
 } | undefined;
 
-const folder = authorFolders[entry.data.author as keyof typeof authorFolders] || '';
 const pageMedia = rawMedia ? {
   ...rawMedia,
-  audio: rawMedia.audio ? `${folder}/${rawMedia.audio}` : undefined,
-  audios: rawMedia.audios ? rawMedia.audios.map(p => `${folder}/${p}`) : undefined,
-  video: rawMedia.video ? `${folder}/${rawMedia.video}` : undefined,
+  audio: rawMedia.audio,
+  audios: rawMedia.audios,
+  video: rawMedia.video,
   title: rawMedia.title
 } : undefined;
 ---
@@ -103,6 +96,7 @@ const pageMedia = rawMedia ? {
   themeClass={authorTitles.themeClass}
   brandTitle={authorTitles.brandTitle}
   brandSubtitle={authorTitles.brandSubtitle}
+  shortLink={`https://turath-al-libiyayn.pages.dev/book/${entry.data.author}/${entry.data.order}`}
 >
   {pageMedia && (() => {
     const hasSingleAudio = !!pageMedia.audio;
@@ -230,6 +224,7 @@ const pageMedia = rawMedia ? {
   }
   .plyr--full-ui input[type=range] {
     color: var(--primary-color);
+    accent-color: var(--primary-color);
   }
 </style>
 
