@@ -1058,6 +1058,11 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
         const id = el.id || `plyr-${Math.random().toString(36).slice(2)}`;
         el.id = id;
         const player = new Plyr(el, plyrConfig);
+        player.on('play', () => {
+          plyrInstances.forEach((p, pid) => {
+            if (pid !== id) p.pause();
+          });
+        });
         plyrInstances.set(id, player);
       });
     }
