@@ -256,7 +256,7 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
                         <option value={`/media/${audioFile}`}>المقطع {i + 1}</option>
                       ))}
                     </select>
-                    <audio class="local-audio-player plyr-audio" preload="metadata" data-playlist-player>
+                    <audio class="local-audio-player plyr-audio" preload="metadata" data-playlist-player crossorigin="anonymous">
                       <source src={`/media/${entry.item.audios[0]}`} />
                       متصفحك لا يدعم تشغيل هذا الملف الصوتي.
                     </audio>
@@ -265,7 +265,7 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
                 {entry.item.audio && (
                   <div class="player-wrapper">
                     <span class="player-label">استماع للمادة الصوتية:</span>
-                    <audio class="local-audio-player plyr-audio" preload="metadata">
+                    <audio class="local-audio-player plyr-audio" preload="metadata" crossorigin="anonymous">
                       <source src={`/media/${entry.item.audio}`} />
                       متصفحك لا يدعم تشغيل هذا الملف الصوتي.
                     </audio>
@@ -274,7 +274,7 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
                 {entry.item.video && (
                   <div class="player-wrapper">
                     <span class="player-label">مشاهدة المادة المرئية:</span>
-                    <video class="local-video-player plyr-video" preload="metadata">
+                    <video class="local-video-player plyr-video" preload="metadata" crossorigin="anonymous">
                       <source src={`/media/${entry.item.video}`} type="video/mp4" />
                       متصفحك لا يدعم تشغيل هذا الفيديو.
                     </video>

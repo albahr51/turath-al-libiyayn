@@ -119,7 +119,7 @@ const pageMedia = rawMedia ? {
                 ))}
               </select>
               <div class="local-audio-wrapper">
-                <audio class="local-audio-player plyr-audio" preload="metadata" data-playlist-player>
+                <audio class="local-audio-player plyr-audio" preload="metadata" data-playlist-player crossorigin="anonymous">
                   <source src={`/media/${pageMedia.audios![0]}`} />
                   متصفحك لا يدعم تشغيل هذا الملف الصوتي.
                 </audio>
@@ -131,7 +131,7 @@ const pageMedia = rawMedia ? {
           <div class="media-item-wrapper">
             <h4 class="media-item-title">{pageMedia.title}</h4>
             <div class="local-audio-wrapper">
-              <audio class="local-audio-player plyr-audio" preload="metadata">
+              <audio class="local-audio-player plyr-audio" preload="metadata" crossorigin="anonymous">
                 <source src={`/media/${pageMedia.audio}`} />
                 متصفحك لا يدعم تشغيل هذا الملف الصوتي.
               </audio>
@@ -142,7 +142,7 @@ const pageMedia = rawMedia ? {
           <div class="media-item-wrapper">
             <h4 class="media-item-title">{pageMedia.title}</h4>
             <div class="local-video-wrapper">
-              <video class="local-video-player plyr-video" preload="metadata">
+              <video class="local-video-player plyr-video" preload="metadata" crossorigin="anonymous">
                 <source src={`/media/${pageMedia.video}`} type="video/mp4" />
                 متصفحك لا يدعم تشغيل هذا الفيديو.
               </video>
