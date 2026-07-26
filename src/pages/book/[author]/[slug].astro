@@ -212,17 +212,17 @@ const pageMedia = rawMedia ? {
   :root {
     --plyr-color-main: var(--primary-color);
   }
-  .plyr--audio .plyr__controls {
+  :global(.plyr--audio .plyr__controls) {
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
   }
-  .plyr__control--overlaid {
+  :global(.plyr__control--overlaid) {
     background: var(--primary-color);
   }
-  .plyr__control--overlaid:hover {
+  :global(.plyr__control--overlaid:hover) {
     background: var(--primary-light) !important;
   }
-  .plyr--full-ui input[type=range] {
+  :global(.plyr--full-ui input[type=range]) {
     color: var(--primary-color);
     accent-color: var(--primary-color);
   }
@@ -247,7 +247,10 @@ const pageMedia = rawMedia ? {
       tooltips: { controls: true, seek: true },
       invertTime: false,
       resetOnEnd: true,
-      displayDuration: true
+      displayDuration: true,
+      clickToPlay: true,
+      disableContextMenu: true,
+      hideControls: false
     };
 
     document.querySelectorAll('audio.plyr-audio, video.plyr-video').forEach((el) => {

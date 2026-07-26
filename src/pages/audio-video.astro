@@ -824,7 +824,6 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
     display: flex;
     flex-direction: column;
     gap: 6px;
-    overflow: hidden;
   }
 
   .player-label {
@@ -992,32 +991,32 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
   }
 
   /* Plyr custom theme overrides */
-  .plyr--audio .plyr__controls {
+  :global(.plyr--audio .plyr__controls) {
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
   }
-  .plyr--video .plyr__controls {
+  :global(.plyr--video .plyr__controls) {
     background: linear-gradient(transparent, rgba(0,0,0,0.85));
   }
-  .plyr__control--overlaid {
+  :global(.plyr__control--overlaid) {
     background: var(--primary-color);
   }
-  .plyr--video .plyr__control--overlaid {
+  :global(.plyr--video .plyr__control--overlaid) {
     background: var(--primary-color);
   }
-  .plyr__control--overlaid:hover {
+  :global(.plyr__control--overlaid:hover) {
     background: var(--primary-light) !important;
   }
-  .plyr--full-ui input[type=range] {
+  :global(.plyr--full-ui input[type=range]) {
     color: var(--primary-color);
     accent-color: var(--primary-color);
   }
-  .plyr--video .plyr__control.plyr__tab-focus,
-  .plyr--video .plyr__control:hover,
-  .plyr--video .plyr__control[aria-expanded=true] {
+  :global(.plyr--video .plyr__control.plyr__tab-focus),
+  :global(.plyr--video .plyr__control:hover),
+  :global(.plyr--video .plyr__control[aria-expanded=true]) {
     background: var(--primary-color);
   }
-  .plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true]::before {
+  :global(.plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true]::before) {
     background: var(--primary-color);
   }
   :root {
@@ -1049,7 +1048,10 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
       invertTime: false,
       toggleInvert: false,
       resetOnEnd: true,
-      displayDuration: true
+      displayDuration: true,
+      clickToPlay: true,
+      disableContextMenu: true,
+      hideControls: false
     };
 
     function initPlayers(container = document) {
