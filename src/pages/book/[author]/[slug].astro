@@ -6,22 +6,21 @@ import printMappings from '../../../data/print-mappings.json';
 import '../../../styles/book-page.css';
 import 'plyr/dist/plyr.css';
 
-function stripDiacritics(s: string): string {
-  return s.replace(/[\u064B-\u065F\u0670\u0610-\u061A]/g, '');
-}
-
 export async function getStaticPaths() {
+  const strip = (s: string) => s.replace(/[\u064B-\u065F\u0670\u0610-\u061A]/g, '');
   const entries = await getCollection('books');
   return entries.map(entry => {
     return {
       params: { 
         author: entry.data.author, 
-        slug: entry.data.slug 
+        slug: strip(entry.data.slug)
       },
       props: { entry }
     };
   });
 }
+
+function stripDiacritics(s: string) { return s.replace(/[\u064B-\u065F\u0670\u0610-\u061A]/g, ''); }
 
 // Build order→PDF slug lookup for each author
 const allEntries = await getCollection('books');
@@ -31,7 +30,7 @@ for (const author of ['abu-yahya', 'atiyatullah']) {
   if (!pm) continue;
   const list: [number, string][] = [];
   for (const [page, slugs] of Object.entries(pm)) {
-    const match = allEntries.find(e => e.data.author === author && e.data.slug === slugs[0]);
+    const match = allEntries.find(e => e.data.author === author && stripDiacritics(e.data.slug) === stripDiacritics(slugs[0]));
     if (match) list.push([match.data.order, slugs[0]]);
   }
   list.sort((a, b) => a[0] - b[0]);
@@ -54,6 +53,7 @@ function findPdfSlug(order: number, author: string, slug: string): string {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+const cleanSlug = stripDiacritics(entry.data.slug);
 
 const authorTitles = {
   'abu-yahya': {
@@ -68,11 +68,11 @@ const authorTitles = {
   }
 }[entry.data.author];
 
-const printPdfSlug = findPdfSlug(entry.data.order, entry.data.author, entry.data.slug);
+const printPdfSlug = findPdfSlug(entry.data.order, entry.data.author, cleanSlug);
 const printLink = `/media/extracted/${entry.data.author}/${printPdfSlug}.pdf`;
 
 // Fetch media info from mapping json
-const rawMedia = mediaMappings[entry.data.slug as keyof typeof mediaMappings] as {
+const rawMedia = mediaMappings[cleanSlug as keyof typeof mediaMappings] as {
   title: string;
   audio?: string;
   audios?: string[];
@@ -92,7 +92,7 @@ const pageMedia = rawMedia ? {
   title={`${entry.data.title} | ${authorTitles.brandTitle}`}
   description={`${entry.data.title} - ${authorTitles.brandTitle}`}
   author={entry.data.author}
-  currentSlug={entry.data.slug}
+  currentSlug={cleanSlug}
   themeClass={authorTitles.themeClass}
   brandTitle={authorTitles.brandTitle}
   brandSubtitle={authorTitles.brandSubtitle}
