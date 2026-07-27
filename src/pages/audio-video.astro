@@ -247,7 +247,7 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
               <!-- Local Players -->
               <div class="media-players-section">
                 {entry.item.audios && entry.item.audios.length > 0 && (
-                  <div class="player-wrapper playlist-wrapper">
+                  <div class="player-wrapper playlist-wrapper single-audio-wrap">
                     <label class="playlist-label" for={`playlist-${entry.item.slug}`}>
                       <span>📋 قائمة تشغيل ({entry.item.audios.length} مقطع)</span>
                     </label>
@@ -263,7 +263,7 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
                   </div>
                 )}
                 {entry.item.audio && (
-                  <div class="player-wrapper">
+                  <div class="player-wrapper single-audio-wrap">
                     <span class="player-label">استماع للمادة الصوتية:</span>
                     <audio class="local-audio-player plyr-audio" preload="metadata" crossorigin="anonymous">
                       <source src={`/media/${entry.item.audio}`} />
@@ -823,6 +823,10 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
     display: flex;
     flex-direction: column;
     gap: 6px;
+    max-width: 100%;
+  }
+  .player-wrapper.single-audio-wrap {
+    overflow: hidden;
   }
 
   .player-label {
@@ -989,10 +993,20 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
     .portal-badge { font-size: 0.75rem; padding: 4px 12px; }
   }
 
-  /* Plyr custom theme overrides */
+  /* Audio player: prevent controls overflow on narrow cards */
+  :global(.plyr--audio) {
+    max-width: 100%;
+  }
   :global(.plyr--audio .plyr__controls) {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    justify-content: center;
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
+  }
+  :global(.plyr--audio .plyr__volume input[type=range]) {
+    min-width: 40px;
+    max-width: 70px;
   }
   :global(.plyr--video .plyr__controls) {
     background: linear-gradient(transparent, rgba(0,0,0,0.85));
@@ -1033,12 +1047,33 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
   document.addEventListener('DOMContentLoaded', () => {
     const plyrInstances = new Map();
 
-    const plyrConfig = {
-      controls: [
-        'play-large', 'restart', 'rewind', 'play', 'fast-forward',
-        'progress', 'current-time', 'duration',
-        'mute', 'volume', 'captions', 'settings', 'download', 'pip', 'airplay', 'fullscreen'
-      ],
+    const audioControls = [
+      'play', 'progress', 'current-time', 'duration',
+      'mute', 'volume', 'settings', 'download'
+    ];
+    const videoControls = [
+      'play-large', 'restart', 'rewind', 'play', 'fast-forward',
+      'progress', 'current-time', 'duration',
+      'mute', 'volume', 'captions', 'settings', 'download', 'pip', 'airplay', 'fullscreen'
+    ];
+
+    const audioConfig = {
+      controls: audioControls,
+      settings: ['speed'],
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] },
+      seekTime: 10,
+      keyboard: { focused: true, global: true },
+      tooltips: { controls: true, seek: true },
+      invertTime: false,
+      toggleInvert: false,
+      resetOnEnd: true,
+      displayDuration: true,
+      clickToPlay: true,
+      disableContextMenu: true,
+      hideControls: false
+    };
+    const videoConfig = {
+      controls: videoControls,
       settings: ['speed', 'quality'],
       speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] },
       seekTime: 10,
@@ -1054,11 +1089,23 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
     };
 
     function initPlayers(container = document) {
-      container.querySelectorAll('audio.plyr-audio, video.plyr-video').forEach((el) => {
+      container.querySelectorAll('audio.plyr-audio').forEach((el) => {
         if (el.id && plyrInstances.has(el.id)) return;
         const id = el.id || `plyr-${Math.random().toString(36).slice(2)}`;
         el.id = id;
-        const player = new Plyr(el, plyrConfig);
+        const player = new Plyr(el, audioConfig);
+        player.on('play', () => {
+          plyrInstances.forEach((p, pid) => {
+            if (pid !== id) p.pause();
+          });
+        });
+        plyrInstances.set(id, player);
+      });
+      container.querySelectorAll('video.plyr-video').forEach((el) => {
+        if (el.id && plyrInstances.has(el.id)) return;
+        const id = el.id || `plyr-${Math.random().toString(36).slice(2)}`;
+        el.id = id;
+        const player = new Plyr(el, videoConfig);
         player.on('play', () => {
           plyrInstances.forEach((p, pid) => {
             if (pid !== id) p.pause();
