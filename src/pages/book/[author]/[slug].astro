@@ -346,9 +346,15 @@ const pageMedia = rawMedia ? {
       if (!muteBtn || !volume || muteBtn.parentNode.classList.contains('volume-popup-wrap')) return;
       const wrap = document.createElement('div');
       wrap.className = 'volume-popup-wrap';
-      muteBtn.parentNode.insertBefore(wrap, muteBtn);
-      wrap.appendChild(muteBtn);
-      wrap.appendChild(volume);
+      if (volume.contains(muteBtn)) {
+        volume.parentNode.insertBefore(wrap, volume);
+        wrap.appendChild(muteBtn);
+        wrap.appendChild(volume);
+      } else {
+        muteBtn.parentNode.insertBefore(wrap, muteBtn);
+        wrap.appendChild(muteBtn);
+        wrap.appendChild(volume);
+      }
     }
 
     document.querySelectorAll('audio.plyr-audio').forEach((el) => {
