@@ -32,7 +32,13 @@ export async function onRequest(context) {
 
     const headers = new Headers(response.headers);
 
-    headers.set('Content-Type', 'audio/mpeg');
+    const lower = fileName.toLowerCase();
+    const contentType = lower.endsWith('.mp4')
+      ? 'video/mp4'
+      : lower.endsWith('.webm')
+        ? 'video/webm'
+        : 'audio/mpeg';
+    headers.set('Content-Type', contentType);
     headers.delete('Content-Disposition');
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Cache-Control', 'public, max-age=86400');
