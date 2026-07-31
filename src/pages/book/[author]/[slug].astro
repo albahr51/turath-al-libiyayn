@@ -265,18 +265,18 @@ const pageMedia = rawMedia ? {
     max-width: 24px;
     margin: 0;
   }
-  :global(.plyr--audio .volume-popup-wrap input[type=range]::-webkit-slider-runnable-track) {
+  :global(.plyr--audio .volume-popup-wrap .plyr__volume input[type=range]::-webkit-slider-runnable-track) {
     width: 5px;
     height: 88px;
     background-color: var(--plyr-audio-range-track-background, #c1c8d199);
     background-image: linear-gradient(to top, currentColor 0, currentColor var(--value, 0), transparent var(--value, 0));
   }
-  :global(.plyr--audio .volume-popup-wrap input[type=range]::-moz-range-track) {
+  :global(.plyr--audio .volume-popup-wrap .plyr__volume input[type=range]::-moz-range-track) {
     width: 5px;
     height: 88px;
     background-color: var(--plyr-audio-range-track-background, #c1c8d199);
   }
-  :global(.plyr--audio .volume-popup-wrap input[type=range]::-moz-range-progress) {
+  :global(.plyr--audio .volume-popup-wrap .plyr__volume input[type=range]::-moz-range-progress) {
     height: 88px;
     background: currentColor;
   }
