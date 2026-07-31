@@ -825,9 +825,6 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
     gap: 6px;
     max-width: 100%;
   }
-  .player-wrapper.single-audio-wrap {
-    overflow: hidden;
-  }
 
   .player-label {
     font-size: 0.78rem;
@@ -1008,6 +1005,60 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
     min-width: 40px;
     max-width: 70px;
   }
+  /* Vertical volume popup (Windows-style) — frees horizontal space for the seek bar */
+  :global(.volume-popup-wrap) {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  :global(.volume-popup-wrap .plyr__volume) {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 8px 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px var(--shadow-color);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .15s ease, visibility .15s ease;
+    z-index: 60;
+  }
+  :global(.volume-popup-wrap:hover .plyr__volume),
+  :global(.volume-popup-wrap:focus-within .plyr__volume),
+  :global(.volume-popup-wrap:active .plyr__volume) {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  :global(.plyr--audio .volume-popup-wrap .plyr__volume input[type=range]) {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 24px;
+    height: 88px;
+    min-width: 0;
+    max-width: 24px;
+    margin: 0;
+  }
+  :global(.plyr--audio .volume-popup-wrap input[type=range]::-webkit-slider-runnable-track) {
+    width: 5px;
+    height: 88px;
+    background-color: var(--plyr-audio-range-track-background, #c1c8d199);
+    background-image: linear-gradient(to top, currentColor 0, currentColor var(--value, 0), transparent var(--value, 0));
+  }
+  :global(.plyr--audio .volume-popup-wrap input[type=range]::-moz-range-track) {
+    width: 5px;
+    height: 88px;
+    background-color: var(--plyr-audio-range-track-background, #c1c8d199);
+  }
+  :global(.plyr--audio .volume-popup-wrap input[type=range]::-moz-range-progress) {
+    height: 88px;
+    background: currentColor;
+  }
   :global(.plyr--video .plyr__controls) {
     background: linear-gradient(transparent, rgba(0,0,0,0.85));
   }
@@ -1088,12 +1139,27 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
       hideControls: false
     };
 
+    function setupVerticalVolume(player) {
+      const container = player.elements?.container;
+      const controls = player.elements?.controls;
+      if (!container || !controls || !container.classList.contains('plyr--audio')) return;
+      const muteBtn = controls.querySelector('.plyr__control[data-plyr="mute"]');
+      const volume = controls.querySelector('.plyr__volume');
+      if (!muteBtn || !volume || muteBtn.parentNode.classList.contains('volume-popup-wrap')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'volume-popup-wrap';
+      muteBtn.parentNode.insertBefore(wrap, muteBtn);
+      wrap.appendChild(muteBtn);
+      wrap.appendChild(volume);
+    }
+
     function initPlayers(container = document) {
       container.querySelectorAll('audio.plyr-audio').forEach((el) => {
         if (el.id && plyrInstances.has(el.id)) return;
         const id = el.id || `plyr-${Math.random().toString(36).slice(2)}`;
         el.id = id;
         const player = new Plyr(el, audioConfig);
+        setupVerticalVolume(player);
         player.on('play', () => {
           plyrInstances.forEach((p, pid) => {
             if (pid !== id) p.pause();
