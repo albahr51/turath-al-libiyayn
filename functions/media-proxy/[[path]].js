@@ -37,7 +37,15 @@ export async function onRequest(context) {
       ? 'video/mp4'
       : lower.endsWith('.webm')
         ? 'video/webm'
-        : 'audio/mpeg';
+        : lower.endsWith('.pdf')
+          ? 'application/pdf'
+          : lower.endsWith('.docx')
+            ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            : lower.endsWith('.doc')
+              ? 'application/msword'
+              : lower.endsWith('.m4a')
+                ? 'audio/mp4'
+                : 'audio/mpeg';
     headers.set('Content-Type', contentType);
     headers.delete('Content-Disposition');
     headers.set('Access-Control-Allow-Origin', '*');
