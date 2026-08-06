@@ -36,6 +36,9 @@ public/media/**
 !public/media/**/*.json
 !public/media/**/*.md
 
+# local archives of scripts/debug artifacts (not for git)
+.archive/
+
 # wrangler
 .wrangler/
 
