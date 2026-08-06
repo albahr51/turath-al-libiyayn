@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
+import { normArabic, stemWord } from '../src/scripts/search-common.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -8,16 +9,6 @@ const contentDir = join(root, 'src', 'content', 'books');
 const outputDir = join(root, 'public', 'search');
 
 if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
-
-function norm(t) {
-  return t
-    .replace(/[\u0610-\u061A\u064B-\u0652\u0670\u06D6-\u06ED\u08F0-\u08FF]/g, '')
-    .replace(/[إأآا]/g, 'ا')
-    .replace(/[ى]/g, 'ي')
-    .replace(/[ة]/g, 'ه')
-    .replace(/[ؤ]/g, 'و')
-    .replace(/[ئ]/g, 'ي');
-}
 
 function walk(dir) {
   const files = [];
@@ -59,24 +50,22 @@ for (const file of files) {
   if (!text || text.length < 20) continue;
 
   count++;
-  const ntext = norm(text);
-  const words = [...new Set(ntext.split(/\s+/).filter(w => w.length >= 2))];
+  const ntext = normArabic(text);
+  const words = [...new Set(ntext.split(/\s+/).filter(w => w.length >= 2).map(stemWord))];
 
   docs.push({
     id: count,
     title,
     slug,
     author,
-    t: ntext.substring(0, 10000),
-    w: words,
-    p: text.substring(0, 350)
+    t: ntext,
+    w: words
   });
 }
 
 console.log(`Indexed ${count} documents`);
 
-const slim = docs.map(d => ({ id: d.id, t: d.t, w: d.w, p: d.p, title: d.title, slug: d.slug, author: d.author }));
 const jsonPath = join(outputDir, 'search-index.json');
-writeFileSync(jsonPath, JSON.stringify(slim));
-const mb = (Buffer.byteLength(JSON.stringify(slim), 'utf-8') / 1024 / 1024).toFixed(1);
+writeFileSync(jsonPath, JSON.stringify(docs));
+const mb = (Buffer.byteLength(JSON.stringify(docs), 'utf-8') / 1024 / 1024).toFixed(1);
 console.log(`JSON index: ${mb}MB`);

@@ -91,22 +91,27 @@ const {
 </script>
 
 <script>
-  function normArabic(s) {
-    return s.replace(/[\u0610-\u061A\u064B-\u0652\u0670\u06D6-\u06ED\u08F0-\u08FF]/g, '').replace(/[إأآا]/g, 'ا').replace(/[ى]/g, 'ي').replace(/[ة]/g, 'ه').replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي');
-  }
+  import { normArabic, buildHighlightRegex } from '../scripts/search-common.mjs';
 
   var searchDone = false;
 
   function doHighlight(q) {
     if (searchDone) return;
     searchDone = true;
-    function norm(s) {
-      return s.replace(/[\u0610-\u061A\u064B-\u0652\u0670\u06D6-\u06ED\u08F0-\u08FF]/g, '').replace(/[إأآا]/g, 'ا').replace(/[ى]/g, 'ي').replace(/[ة]/g, 'ه').replace(/[ؤ]/g, 'و').replace(/[ئ]/g, 'ي');
-    }
-    var term = norm(q).replace(/["'«»\u2018\u2019\u201C\u201D]/g, '').replace(/\s+/g, ' ').trim();
+    var term = normArabic(String(q)).replace(/["'«»\u2018\u2019\u201C\u201D]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!term) return;
-    var tlen = term.length;
+    var words = term.split(/\s+/).filter(function (w) { return w.length >= 2; });
+    if (!words.length) return;
+    var highlightRe = buildHighlightRegex(words);
+    if (!highlightRe) return;
     var firstMark = null;
+
+    function containsAny(normText) {
+      for (var wi = 0; wi < words.length; wi++) {
+        if (normText.indexOf(words[wi]) !== -1) return true;
+      }
+      return false;
+    }
 
     function highlightInText(orig) {
       // Build normalized string with original position mapping
@@ -118,16 +123,18 @@ const {
         origIdx.push(i);
       }
       var nstr = normChars.join('');
-      var parts = [], last = 0, si = 0;
-      while (true) {
-        var idx = nstr.indexOf(term, si);
-        if (idx === -1) break;
-        var s = origIdx[idx];
-        var e = idx + tlen < origIdx.length ? origIdx[idx + tlen] : orig.length;
-        if (s > last) parts.push({t: orig.substring(last, s), m: false});
-        parts.push({t: orig.substring(s, e), m: true});
-        last = e;
-        si = idx + tlen;
+      var parts = [], last = 0;
+      highlightRe.lastIndex = 0;
+      var m;
+      while ((m = highlightRe.exec(nstr)) !== null) {
+        var s = origIdx[m.index];
+        var e = m.index + m[0].length < origIdx.length ? origIdx[m.index + m[0].length] : orig.length;
+        if (s >= last) {
+          if (s > last) parts.push({t: orig.substring(last, s), m: false});
+          parts.push({t: orig.substring(s, e), m: true});
+          last = e;
+        }
+        if (m[0].length === 0) highlightRe.lastIndex++;
       }
       if (last < orig.length) parts.push({t: orig.substring(last), m: false});
       if (!parts.length) return null;
@@ -152,7 +159,7 @@ const {
         var next = child.nextSibling;
         if (child.nodeType === 3) {
           var t = child.textContent;
-          if (t && norm(t).indexOf(term) !== -1) {
+          if (t && containsAny(normArabic(t))) {
             var frag = highlightInText(t);
             if (frag) child.parentNode.replaceChild(frag, child);
           }

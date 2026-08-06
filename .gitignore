@@ -2,6 +2,9 @@
 dist/
 dist_old_*/
 
+# local working notes
+opencode-anchored-summary.md
+
 # generated types
 .astro/
 
