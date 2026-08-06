@@ -10,7 +10,7 @@ interface Props {
 const { author, currentSlug = "" } = Astro.props;
 
 const sidebarData = author === 'abu-yahya' ? sidebarAbuYahya : sidebarAtiyatullah;
-const maxPage = author === 'abu-yahya' ? 3113 : 2456;
+const maxPage = author === 'abu-yahya' ? 3186 : 2456;
 
 function isPartActive(part: any): boolean {
   const partSlug = part.link.split('/').pop();
