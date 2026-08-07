@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from 'fs';
+import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { normArabic, stemWord } from '../src/scripts/search-common.mjs';
@@ -24,6 +24,9 @@ const files = walk(contentDir);
 console.log(`Found ${files.length} content files`);
 
 const docs = [];
+const texts = [];
+const dict = [];
+const dictMap = new Map();
 let count = 0;
 
 for (const file of files) {
@@ -36,6 +39,7 @@ for (const file of files) {
   const title = fm.match(/title:\s*"(.+?)"/)?.[1] || '';
   const slug = fm.match(/slug:\s*"(.+?)"/)?.[1] || '';
   const author = fm.match(/author:\s*"(.+?)"/)?.[1] || '';
+  const order = parseInt(fm.match(/order:\s*(\d+)/)?.[1] || '0', 10);
   if (!slug) continue;
 
   let clean = body.replace(/<[^>]*data-pagefind-ignore[^>]*>[\s\S]*?<\/[^>]+>/gi, ' ');
@@ -51,21 +55,32 @@ for (const file of files) {
 
   count++;
   const ntext = normArabic(text);
-  const words = [...new Set(ntext.split(/\s+/).filter(w => w.length >= 2).map(stemWord))];
-
-  docs.push({
-    id: count,
-    title,
-    slug,
-    author,
-    t: ntext,
-    w: words
+  const w = [...new Set(ntext.split(/\s+/).filter((w) => w.length >= 2).map(stemWord))].map((s) => {
+    let i = dictMap.get(s);
+    if (i === undefined) {
+      i = dict.length;
+      dictMap.set(s, i);
+      dict.push(s);
+    }
+    return i;
   });
+
+  docs.push({ id: count, ti: title, sl: slug, au: author, o: order, w });
+  texts.push(ntext);
 }
 
 console.log(`Indexed ${count} documents`);
+console.log(`Dictionary: ${dict.length} stems`);
 
-const jsonPath = join(outputDir, 'search-index.json');
-writeFileSync(jsonPath, JSON.stringify(docs));
-const mb = (Buffer.byteLength(JSON.stringify(docs), 'utf-8') / 1024 / 1024).toFixed(1);
-console.log(`JSON index: ${mb}MB`);
+const mb = (s) => (Buffer.byteLength(s, 'utf-8') / 1024 / 1024).toFixed(1);
+
+const meta = JSON.stringify({ d: dict, docs });
+writeFileSync(join(outputDir, 'search-meta.json'), meta);
+console.log(`search-meta.json: ${mb(meta)}MB`);
+
+const text = JSON.stringify(texts);
+writeFileSync(join(outputDir, 'search-text.json'), text);
+console.log(`search-text.json: ${mb(text)}MB`);
+
+const oldPath = join(outputDir, 'search-index.json');
+if (existsSync(oldPath)) rmSync(oldPath);

@@ -40,20 +40,30 @@ import Footer from '../components/Footer.astro';
     'atiyatullah': 'مجموع أعمال الشيخ عطية الله الليبي'
   };
 
-  let searchIndexPromise = null;
-  let highlightRe = null;
+  let metaPromise = null;
+  let textPromise = null;
+  let dict: string[] = [];
+  let dictMap: Map<string, number> = new Map();
+  let highlightRe: RegExp | null = null;
   let currentQuery = '';
+  let seq = 0;
 
   const input = document.getElementById('search-page-input') as HTMLInputElement;
   const form = document.getElementById('search-page-form') as HTMLFormElement;
   const box = document.getElementById('search-page-results') as HTMLElement;
 
-  function loadIndex() {
-    if (!searchIndexPromise) {
-      searchIndexPromise = fetch('/search/search-index.json').then((r) => r.json());
-    }
-    return searchIndexPromise;
+  function loadMeta(): Promise<any> {
+    if (!metaPromise) metaPromise = fetch('/search/search-meta.json').then((r) => r.json());
+    return metaPromise;
   }
+
+  function loadText(): Promise<string[]> {
+    if (!textPromise) textPromise = fetch('/search/search-text.json').then((r) => r.json());
+    return textPromise;
+  }
+
+  loadMeta();
+  loadText();
 
   function escapeHtml(s: string): string {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -69,12 +79,29 @@ import Footer from '../components/Footer.astro';
       if (p.length >= 2) phrases.push(p);
       rest = rest.replace(m[0], ' ');
     }
-    const words = normArabic(rest)
-      .split(/\s+/)
-      .filter((w) => w.length >= 2)
-      .map((w) => ({ raw: w, stem: stemWord(w) }));
+    const words: { raw: string; stem: string }[] = [];
+    const seen = new Set<string>();
+    for (const w of normArabic(rest).split(/\s+/).filter((w) => w.length >= 2)) {
+      const raw = w;
+      const stem = stemWord(w);
+      if (!seen.has(stem)) {
+        seen.add(stem);
+        words.push({ raw, stem });
+      }
+    }
+    const phraseWords: { raw: string; stem: string }[] = [];
+    for (const p of phrases) {
+      for (const w of normArabic(p).split(/\s+/).filter((w) => w.length >= 2)) {
+        const raw = w;
+        const stem = stemWord(w);
+        if (!seen.has(stem)) {
+          seen.add(stem);
+          phraseWords.push({ raw, stem });
+        }
+      }
+    }
     const phraseFull = normArabic(q.replace(/["«»]/g, '')).replace(/\s+/g, ' ').trim();
-    return { phrases, words, phraseFull };
+    return { phrases, words, phraseWords, phraseFull };
   }
 
   function countOcc(t: string, s: string): number {
@@ -89,11 +116,11 @@ import Footer from '../components/Footer.astro';
   }
 
   function wordMatch(doc: any, word: { stem: string }): number {
-    if (doc.w.indexOf(word.stem) !== -1) return 2;
+    const idx = dictMap.get(word.stem);
+    if (idx !== undefined && doc.w.indexOf(idx) !== -1) return 2;
     if (word.stem.length >= 4) {
-      const wl = doc.w;
-      for (let i = 0; i < wl.length; i++) {
-        const dw = wl[i];
+      for (const i of doc.w) {
+        const dw = dict[i];
         if (dw.length >= 4 && dw.indexOf(word.stem) !== -1) return 1;
       }
     }
@@ -133,49 +160,47 @@ import Footer from '../components/Footer.astro';
     return best;
   }
 
-  function scoreDoc(doc: any, query: any) {
-    let score = 0;
-    let allWords = true;
-    const strongWords: string[] = [];
-
-    for (const ph of query.phrases) {
-      const c = countOcc(doc.t, ph);
-      if (c > 0) score += 3000 + Math.min(c, 5) * 50;
-    }
-
-    for (const w of query.words) {
+  function metaScore(doc: any, query: any) {
+    const strong: { raw: string; stem: string }[] = [];
+    let hasPartial = false;
+    const words = query.words.length ? query.words : query.phraseWords;
+    for (const w of words) {
       const m = wordMatch(doc, w);
-      if (m >= 2) {
-        score += 100;
-        strongWords.push(w.stem);
-      } else if (m === 1) {
-        score += 40;
-      } else {
-        allWords = false;
+      if (m >= 2) strong.push(w);
+      else if (m === 1) hasPartial = true;
+    }
+    return { strong, hasPartial };
+  }
+
+  function fullScore(r: any, query: any) {
+    const t = r.doc.t;
+    let phraseHit = 0;
+    if (query.phraseFull.length >= 3 && countOcc(t, query.phraseFull) > 0) phraseHit = 1;
+    if (!phraseHit) {
+      for (const ph of query.phrases) {
+        if (countOcc(t, ph) > 0) { phraseHit = 1; break; }
       }
     }
-
-    if (query.phraseFull.length >= 3) {
-      const c = countOcc(doc.t, query.phraseFull);
-      if (c > 0) score += 2000 + Math.min(c, 5) * 50;
+    let span = 0;
+    if (r.s.strong.length >= 2) {
+      const s = minSpan(t, r.s.strong.map((w: any) => w.raw));
+      if (s <= 600) span = 600 - s;
     }
-
-    if (strongWords.length >= 2) {
-      const span = minSpan(doc.t, strongWords);
-      if (span <= 600) score += 600 - span;
-    }
-
-    return { score, allWords };
+    let occ = 0;
+    for (const w of r.s.strong) occ += Math.min(countOcc(t, w.raw), 50);
+    r.s.phraseHit = phraseHit;
+    r.s.span = span;
+    r.s.occ = occ;
+    r.ctx = extractContext(r.doc, query);
   }
 
   function extractContext(doc: any, query: any) {
-    const t = doc.t;
+    const t = doc.t || '';
     let idx = -1;
     if (query.phraseFull.length >= 3) idx = t.indexOf(query.phraseFull);
     if (idx === -1) {
-      for (const w of query.words) {
-        idx = t.indexOf(w.stem);
-        if (idx === -1) idx = t.indexOf(w.raw);
+      for (const w of [...query.words, ...query.phraseWords]) {
+        idx = t.indexOf(w.raw);
         if (idx !== -1) break;
       }
     }
@@ -209,42 +234,53 @@ import Footer from '../components/Footer.astro';
     return lines.map((l) => highlightText(l)).join('<br class="search-result-br" />');
   }
 
+  function pageLabel(o: number): string {
+    return o > 0 ? `<span class="search-result-page">صفحة ${o}</span>` : '';
+  }
+
   function resultHtml(r: any): string {
-    const book = authorLabels[r.doc.author] || '';
-    const title = escapeHtml(r.doc.title || r.doc.slug || '');
-    const url = `/book/${r.doc.author}/${r.doc.slug}#q=${encodeURIComponent(currentQuery)}`;
+    const book = authorLabels[r.doc.au] || '';
+    const url = `/book/${r.doc.au}/${r.doc.sl}#q=${encodeURIComponent(currentQuery)}`;
+    const body = r.ctx
+      ? `<div class="search-result-text">${splitLines(r.ctx.text)}</div>`
+      : `<div class="search-result-text search-result-loading">جارٍ تحميل نص الصفحة...</div>`;
     return `<a class="search-result" href="${url}">
-      <div class="search-result-book">${book}</div>
-      <div class="search-result-title">${title}</div>
-      <div class="search-result-lines">${splitLines(r.ctx.text)}</div>
+      <div class="search-result-top">
+        <span class="search-result-book">${book}</span>
+        ${pageLabel(r.doc.o)}
+      </div>
+      ${body}
+      <div class="search-result-open">افتح في الكتاب ←</div>
     </a>`;
   }
 
-  function renderResults(q: string, strong: any[], partial: any[]) {
+  function renderResults(q: string, strong: any[], partial: any[], pendingText: boolean) {
     if (!strong.length && !partial.length) {
       box.innerHTML = `<div class="search-page-status">لا توجد نتائج لـ "${escapeHtml(q)}".</div>`;
       return;
     }
     const shown = strong.length || partial.length;
-    let html = `<div class="search-page-count">${shown} نتيجة عن "${escapeHtml(q)}"</div>`;
+    let html = `<div class="search-page-count">${shown} نتيجة عن "${escapeHtml(q)}"${pendingText ? ' <span class="search-page-pending">— جارٍ تحميل النصوص لاستكمال المقتطفات وتحسين الترتيب...</span>' : ''}</div>`;
     if (strong.length) {
-      html += `<h2 class="search-page-section-title">نتائج مطابقة لجميع الكلمات (${strong.length})</h2>`;
       html += strong.slice(0, 100).map(resultHtml).join('');
       if (strong.length > 100) {
         html += `<div class="search-page-more">يعرض أول 100 من أصل ${strong.length} نتيجة...</div>`;
       }
     }
     if (!strong.length && partial.length) {
-      html += `<div class="search-page-note">لم يُعثر على نتائج تطابق جميع الكلمات معًا. إليك أقرب النتائج:</div>`;
+      html += `<div class="search-page-note">لم يُعثر على نتائج تطابق الكلمات معًا. إليك أقرب النتائج:</div>`;
       html += partial.slice(0, 30).map(resultHtml).join('');
       if (partial.length > 30) {
         html += `<div class="search-page-more">يعرض أول 30 من أصل ${partial.length} نتيجة...</div>`;
       }
     }
+    const scrollY = window.scrollY;
     box.innerHTML = html;
+    window.scrollTo(0, scrollY);
   }
 
   async function runSearch(q: string) {
+    const mySeq = ++seq;
     currentQuery = q.trim();
     if (!currentQuery) {
       box.innerHTML = '<div class="search-page-status">اكتب كلمة أو عبارة للبحث...</div>';
@@ -252,16 +288,20 @@ import Footer from '../components/Footer.astro';
     }
     box.innerHTML = '<div class="search-page-status">جارٍ البحث...</div>';
 
-    let index: any[];
+    let meta: any;
     try {
-      index = await loadIndex();
+      meta = await loadMeta();
     } catch (e) {
       box.innerHTML = '<div class="search-page-status">تعذّر تحميل فهرس البحث.</div>';
       return;
     }
+    if (mySeq !== seq) return;
+
+    dict = meta.d;
+    dictMap = new Map(dict.map((s: string, i: number) => [s, i]));
 
     const query = buildQuery(currentQuery);
-    if (!query.phrases.length && !query.words.length) {
+    if (!query.phrases.length && !query.words.length && !query.phraseWords.length) {
       box.innerHTML = `<div class="search-page-status">لا توجد كلمات كافية للبحث عن "${escapeHtml(currentQuery)}".</div>`;
       return;
     }
@@ -270,16 +310,43 @@ import Footer from '../components/Footer.astro';
       query.words.length ? query.words.map((w: any) => w.raw) : [query.phraseFull]
     );
 
-    const results: any[] = [];
-    for (const doc of index) {
-      if (!doc || !doc.w || !doc.t) continue;
-      const sc = scoreDoc(doc, query);
-      if (sc.score <= 0) continue;
-      results.push({ doc, allWords: sc.allWords, score: sc.score, ctx: extractContext(doc, query) });
+    const strong: any[] = [];
+    const partial: any[] = [];
+    for (const doc of meta.docs) {
+      const s = metaScore(doc, query);
+      if (s.strong.length) strong.push({ doc, s, ctx: null });
+      else if (s.hasPartial) partial.push({ doc, s, ctx: null });
     }
-    results.sort((a, b) => b.score - a.score || a.ctx.start - b.ctx.start);
+    const sortMeta = (a: any, b: any) =>
+      (a.doc.o || 999999) - (b.doc.o || 999999);
+    strong.sort(sortMeta);
+    partial.sort(sortMeta);
 
-    renderResults(currentQuery, results.filter((r) => r.allWords), results.filter((r) => !r.allWords));
+    renderResults(currentQuery, strong, partial, true);
+
+    const shown = strong.length ? strong : partial;
+    if (!shown.length) return;
+
+    loadText()
+      .then((texts) => {
+        if (mySeq !== seq) return;
+        for (const r of shown) {
+          r.doc.t = texts[r.doc.id - 1] || '';
+          fullScore(r, query);
+        }
+        shown.sort((a, b) => {
+          if (b.s.phraseHit !== a.s.phraseHit) return b.s.phraseHit - a.s.phraseHit;
+          if (b.s.strong.length !== a.s.strong.length) return b.s.strong.length - a.s.strong.length;
+          if (b.s.span !== a.s.span) return b.s.span - a.s.span;
+          if (b.s.occ !== a.s.occ) return b.s.occ - a.s.occ;
+          return (a.doc.o || 999999) - (b.doc.o || 999999);
+        });
+        renderResults(currentQuery, strong, partial, false);
+      })
+      .catch(() => {
+        if (mySeq !== seq) return;
+        renderResults(currentQuery, strong, partial, false);
+      });
   }
 
   form.addEventListener('submit', (e) => {
@@ -383,13 +450,8 @@ import Footer from '../components/Footer.astro';
     margin-bottom: 18px;
     padding-inline-start: 4px;
   }
-  .search-page-section-title {
-    font-family: var(--font-serif), serif;
-    font-size: 1.15rem;
-    color: var(--primary-color);
-    margin: 22px 0 14px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color);
+  .search-page-pending {
+    color: var(--accent-color);
   }
   .search-page-note {
     background: var(--card-bg);
@@ -421,34 +483,60 @@ import Footer from '../components/Footer.astro';
     border-color: var(--primary-light);
     box-shadow: 0 4px 14px var(--shadow-color);
   }
-  .search-result-book {
-    font-size: 0.8rem;
-    color: var(--accent-color);
-    margin-bottom: 4px;
+  .search-result-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
   }
-  .search-result-title {
+  .search-result-book {
     font-family: var(--font-serif), serif;
-    font-size: 1.12rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--primary-color);
-    margin-bottom: 8px;
   }
-  .search-result-lines {
+  .search-result-page {
+    flex-shrink: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 3px 12px;
+  }
+  .search-result-text {
     font-family: var(--font-serif), serif;
     font-size: 0.95rem;
     line-height: 1.9;
     color: var(--text-muted);
   }
-  .search-result-lines mark {
+  .search-result-text mark {
     background: #ffdd57;
     color: #1f2421;
     outline: 3px solid #e6a800;
     border-radius: 4px;
     padding: 0 2px;
   }
-  [data-theme="dark"] .search-result-lines mark {
+  [data-theme="dark"] .search-result-text mark {
     background: #b78a2f;
     color: #0b100d;
     outline: 3px solid #8a641f;
+  }
+  .search-result-loading {
+    color: var(--text-muted);
+    font-style: italic;
+    opacity: 0.75;
+  }
+  .search-result-open {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    font-weight: 600;
+  }
+  .search-result:hover .search-result-open {
+    text-decoration: underline;
   }
 </style>
