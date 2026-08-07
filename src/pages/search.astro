@@ -35,9 +35,9 @@ import Footer from '../components/Footer.astro';
 <script>
   import { normArabic, stemWord, buildHighlightRegex } from '../scripts/search-common.mjs';
 
-  const authorLabels = {
-    'abu-yahya': 'مجموع أعمال الشيخ أبي يحيى الليبي',
-    'atiyatullah': 'مجموع أعمال الشيخ عطية الله الليبي'
+  const authorMeta: Record<string, { label: string; cls: string }> = {
+    'abu-yahya': { label: 'مجموع أعمال الشيخ أبي يحيى الليبي', cls: 'sr-green' },
+    'atiyatullah': { label: 'مجموع أعمال الشيخ عطية الله الليبي', cls: 'sr-gold' }
   };
 
   let metaPromise = null;
@@ -234,23 +234,41 @@ import Footer from '../components/Footer.astro';
     return lines.map((l) => highlightText(l)).join('<br class="search-result-br" />');
   }
 
+  function cleanTitle(t: string): string {
+    if (!t) return '';
+    return t.replace(/^\d+\s*[-–—]\s*/, '').replace(/\s+/g, ' ').trim();
+  }
+
   function pageLabel(o: number): string {
-    return o > 0 ? `<span class="search-result-page">صفحة ${o}</span>` : '';
+    return o > 0 ? `<span class="sr-page">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+      صفحة ${o}</span>` : '';
   }
 
   function resultHtml(r: any): string {
-    const book = authorLabels[r.doc.au] || '';
+    const am = authorMeta[r.doc.au] || { label: '', cls: '' };
     const url = `/book/${r.doc.au}/${r.doc.sl}#q=${encodeURIComponent(currentQuery)}`;
+    const title = cleanTitle(r.doc.ti);
+    const titleLine = title ? `<div class="sr-title">${escapeHtml(title)}</div>` : '';
     const body = r.ctx
-      ? `<div class="search-result-text">${splitLines(r.ctx.text)}</div>`
-      : `<div class="search-result-text search-result-loading">جارٍ تحميل نص الصفحة...</div>`;
-    return `<a class="search-result" href="${url}">
-      <div class="search-result-top">
-        <span class="search-result-book">${book}</span>
+      ? `<div class="sr-text">${splitLines(r.ctx.text)}</div>`
+      : `<div class="sr-skeleton"><span></span><span></span><span></span></div>`;
+    return `<a class="search-result ${am.cls}" href="${url}">
+      <div class="sr-top">
+        <span class="sr-book">
+          <svg class="sr-book-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          ${am.label || ''}
+        </span>
         ${pageLabel(r.doc.o)}
       </div>
+      ${titleLine}
       ${body}
-      <div class="search-result-open">افتح في الكتاب ←</div>
+      <div class="sr-footer">
+        <span class="sr-open">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          افتح في الكتاب
+        </span>
+      </div>
     </a>`;
   }
 
@@ -260,7 +278,11 @@ import Footer from '../components/Footer.astro';
       return;
     }
     const shown = strong.length || partial.length;
-    let html = `<div class="search-page-count">${shown} نتيجة عن "${escapeHtml(q)}"${pendingText ? ' <span class="search-page-pending">— جارٍ تحميل النصوص لاستكمال المقتطفات وتحسين الترتيب...</span>' : ''}</div>`;
+    let html = `<div class="search-page-count">
+      <span class="count-num">${shown} نتيجة</span>
+      <span class="query-pill">${escapeHtml(q)}</span>
+      ${pendingText ? '<span class="search-page-pending">— جارٍ تحميل النصوص لاستكمال المقتطفات وتحسين الترتيب...</span>' : ''}
+    </div>`;
     if (strong.length) {
       html += strong.slice(0, 100).map(resultHtml).join('');
       if (strong.length > 100) {
@@ -445,17 +467,38 @@ import Footer from '../components/Footer.astro';
     padding: 40px 0;
   }
   .search-page-count {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
     font-size: 0.95rem;
     color: var(--text-muted);
-    margin-bottom: 18px;
+    margin-bottom: 22px;
     padding-inline-start: 4px;
   }
+  .count-num {
+    font-family: var(--font-serif), serif;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  .query-pill {
+    font-family: var(--font-serif), serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--primary-light);
+    border-radius: 999px;
+    padding: 3px 16px;
+  }
   .search-page-pending {
-    color: var(--accent-color);
+    color: var(--accent-hover);
+    font-size: 0.84rem;
   }
   .search-page-note {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
+    border-inline-start: 3px solid var(--accent-color);
     border-radius: 10px;
     padding: 12px 16px;
     margin: 18px 0;
@@ -466,77 +509,161 @@ import Footer from '../components/Footer.astro';
     text-align: center;
     color: var(--text-muted);
     font-size: 0.85rem;
-    padding: 10px 0;
+    padding: 14px 0;
   }
   .search-result {
+    --sr-accent: var(--primary-light);
     display: block;
     text-decoration: none;
     color: inherit;
+    position: relative;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-bottom: 14px;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    border-inline-start: 4px solid var(--sr-accent);
+    border-radius: 16px;
+    padding: 18px 20px 14px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 2px var(--shadow-color);
+    transition: transform var(--transition-fast), box-shadow var(--transition-normal), border-color var(--transition-fast);
+    animation: sr-in 0.45s ease both;
   }
+  .search-result.sr-green { --sr-accent: #2d6a4f; }
+  .search-result.sr-gold { --sr-accent: #c5a880; }
+  [data-theme="dark"] .search-result.sr-green { --sr-accent: #40916c; }
+  [data-theme="dark"] .search-result.sr-gold { --sr-accent: #cca473; }
+  @keyframes sr-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .search-result:nth-child(2) { animation-delay: 0.02s; }
+  .search-result:nth-child(3) { animation-delay: 0.04s; }
+  .search-result:nth-child(4) { animation-delay: 0.06s; }
+  .search-result:nth-child(5) { animation-delay: 0.08s; }
+  .search-result:nth-child(6) { animation-delay: 0.1s; }
+  .search-result:nth-child(7) { animation-delay: 0.12s; }
+  .search-result:nth-child(8) { animation-delay: 0.14s; }
+  .search-result:nth-child(9) { animation-delay: 0.16s; }
+  .search-result:nth-child(10) { animation-delay: 0.18s; }
   .search-result:hover {
-    border-color: var(--primary-light);
-    box-shadow: 0 4px 14px var(--shadow-color);
+    transform: translateY(-2px);
+    border-color: var(--sr-accent);
+    box-shadow: 0 10px 26px var(--shadow-color);
   }
-  .search-result-top {
+  .sr-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 8px;
   }
-  .search-result-book {
-    font-family: var(--font-serif), serif;
-    font-size: 1.05rem;
+  .sr-book {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans), sans-serif;
+    font-size: 0.95rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--sr-accent);
+    min-width: 0;
   }
-  .search-result-page {
+  .sr-book-icon {
     flex-shrink: 0;
-    font-size: 0.82rem;
+  }
+  .sr-page {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
     color: var(--text-muted);
-    background: var(--bg-color);
+    background: rgba(0, 0, 0, 0.04);
     border: 1px solid var(--border-color);
     border-radius: 999px;
-    padding: 3px 12px;
+    padding: 4px 13px;
   }
-  .search-result-text {
+  [data-theme="dark"] .sr-page {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .sr-title {
     font-family: var(--font-serif), serif;
-    font-size: 0.95rem;
-    line-height: 1.9;
-    color: var(--text-muted);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 2px 0 10px;
   }
-  .search-result-text mark {
-    background: #ffdd57;
-    color: #1f2421;
-    outline: 3px solid #e6a800;
+  .sr-text {
+    font-family: var(--font-serif), serif;
+    font-size: 1.05rem;
+    line-height: 2.05;
+    color: var(--text-color);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-inline-start: 3px solid var(--sr-accent);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .sr-text mark {
+    background: rgba(197, 168, 128, 0.35);
+    color: inherit;
     border-radius: 4px;
     padding: 0 2px;
-  }
-  [data-theme="dark"] .search-result-text mark {
-    background: #b78a2f;
-    color: #0b100d;
-    outline: 3px solid #8a641f;
-  }
-  .search-result-loading {
-    color: var(--text-muted);
-    font-style: italic;
-    opacity: 0.75;
-  }
-  .search-result-open {
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--border-color);
-    font-size: 0.85rem;
-    color: var(--accent-color);
     font-weight: 600;
   }
-  .search-result:hover .search-result-open {
-    text-decoration: underline;
+  [data-theme="dark"] .sr-text mark {
+    background: rgba(204, 164, 115, 0.35);
+  }
+  .sr-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .sr-skeleton span {
+    height: 13px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--border-color) 25%, var(--card-bg) 50%, var(--border-color) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.3s infinite;
+  }
+  .sr-skeleton span:last-child {
+    width: 62%;
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  .sr-footer {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px dashed var(--border-color);
+  }
+  .sr-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-sans), sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--sr-accent);
+    transition: color var(--transition-fast);
+  }
+  .sr-open svg {
+    transition: transform var(--transition-fast);
+  }
+  .search-result:hover .sr-open {
+    color: var(--primary-light);
+  }
+  .search-result:hover .sr-open svg {
+    transform: translateX(-3px);
+  }
+  @media (max-width: 520px) {
+    .sr-top {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
   }
 </style>
