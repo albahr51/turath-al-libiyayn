@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import Share from '../components/Share.astro';
 import mediaMappings from '../data/media-mappings.json';
 import { getCollection } from 'astro:content';
 import '../styles/book-page.css';
@@ -189,6 +190,10 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
             <span class="author-stat-counts">{atiAudioOnlyCount} صوت / {atiVideoCount} مرئي</span>
           </div>
         </div>
+
+        <div class="media-hero-share">
+          <Share title="المكتبة الصوتية والمرئية | تراث الشيخين الشهيدين" url="https://turath-al-libiyayn.pages.dev/audio-video" />
+        </div>
       </div>
     </section>
 
@@ -333,6 +338,15 @@ const atiVideoCount = mediaItems.filter(item => item.author === 'atiyatullah' &&
     overflow-x: hidden;
     width: 100%;
     max-width: 100%;
+  }
+
+  .media-hero-share {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+  }
+  .media-hero-share .share-open-btn {
+    background-color: #fff;
   }
 
   *, *::before, *::after {

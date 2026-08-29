@@ -6,13 +6,80 @@ interface Props {
 
 const { 
   copyText = "مجموع الأعمال الكاملة للشيخين الشهيدين عطية الله وأبي يحيى الليبيَّين", 
-  descText = "موقع وقفي يُعني بنشر الأعمال الكاملة للشيخين، وحقوق النشر فيه غير محفوظة، فانشر تؤجر {وَحَرِّضِ المُؤْمِنِينَ}"
+  descText = "موقع وقفي يُعني بنشر الأعمال الكاملة للشيخين، وحقوق النشر فيه غير محفوظة، فانشر تؤجر {وَحَرِّضِ المُؤْمِنِينَ}"
 } = Astro.props;
 ---
 
 <footer class="app-footer">
   <div class="footer-container">
-    <p class="footer-copy">{copyText}</p>
-    <p class="footer-desc">{descText}</p>
+    <div class="footer-copy-block">
+      <p class="footer-copy">{copyText}</p>
+      <p class="footer-desc">{descText}</p>
+    </div>
+    <div class="footer-visitors" aria-live="off">
+      <span class="visitors-label">عدد الزوار</span>
+      <span class="visitors-count" id="visitors-count">4000</span>
+    </div>
   </div>
 </footer>
+
+<script is:inline>
+  (function () {
+    try {
+      var BASE = 4000;
+      var KEY = 'turath_visitors';
+      var el = document.getElementById('visitors-count');
+      if (!el) return;
+      var n = BASE + 1;
+      try {
+        var seen = localStorage.getItem(KEY);
+        var val = parseInt(seen, 10);
+        n = BASE + (isNaN(val) ? 1 : val);
+        localStorage.setItem(KEY, String(isNaN(val) ? 2 : val + 1));
+      } catch (e) {
+        n = BASE + 1;
+      }
+      el.textContent = String(n);
+    } catch (e) {}
+  })();
+</script>
+
+<style is:global>
+  .footer-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .footer-copy-block {
+    flex: 1 1 auto;
+  }
+  .footer-visitors {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid #B58A38;
+    border-radius: 8px;
+    background: rgba(181, 138, 56, 0.12);
+  }
+  .visitors-label {
+    font-family: var(--font-sans), sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #B58A38;
+    opacity: 0.9;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .visitors-count {
+    font-family: var(--font-sans), sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #B58A38;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

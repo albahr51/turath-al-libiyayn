@@ -2,6 +2,7 @@
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
+import Share from '../../../components/Share.astro';
 import '../../../styles/book-index.css';
 import printMappings from '../../../data/print-mappings.json';
 import atiyatullahIndex from '../../../data/atiyatullah-index.json';
@@ -112,6 +113,8 @@ const startReadingLink = sidebarData[0]?.link || `/book/${author}/1-بين-يد�
               </svg>
               <span>سيرة الشيخ</span>
             </a>
+
+            <Share title={config.title} url={`https://turath-al-libiyayn.pages.dev/book/${author}`} />
             
             <div class="subportal-download-links">
               <a href={config.pdfLink} download class="btn btn-subportal-download" title="تحميل الكتاب PDF مصورًا">
